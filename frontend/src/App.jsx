@@ -1,28 +1,50 @@
-import './App.css'
-import { Routes,Route,Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import ParentDashboard from './pages/ParentDashboard'
-import StudentDashboard from './pages/StudentDashboard'
-import TeacherDashboard from './pages/TeacherDashboard'
 
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import Login from "./pages/Login";
+import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import ParentDashboard from "./pages/ParentDashboard";
+
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 
 function App() {
   return (
-    <>
     <Routes>
-      <Route path='/' element={<Navigate to ="/login"/>}/>
+      {/* Default route */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route path='/login' element={<Login/>}/>
+      {/* Public route */}
+      <Route path="/login" element={<Login />} />
 
-      <Route path='/parent/dashboard' element={<ParentDashboard/>}/>
+      {/* Student routes */}
+      <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+        <Route
+          path="/student/dashboard"
+          element={<StudentDashboard />}
+        />
+      </Route>
 
-      <Route path='/student/dashboard' element={<StudentDashboard/>}/>
+      {/* Teacher routes */}
+      <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
+        <Route
+          path="/teacher/dashboard"
+          element={<TeacherDashboard />}
+        />
+      </Route>
 
-      <Route path='/teacher/dashboard' element={<TeacherDashboard/>}/>
+      {/* Parent routes */}
+      <Route element={<ProtectedRoute allowedRoles={["parent"]} />}>
+        <Route
+          path="/parent/dashboard"
+          element={<ParentDashboard />}
+        />
+      </Route>
+
+      {/* Unknown routes */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
-
-    </>
-  )
+  );
 }
 
-export default App
+export default App;
