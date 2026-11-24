@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -11,21 +10,17 @@ const {
   getStudentHomework,
   completeHomework,
   getChildHomework,
+  getParentHomework,
 } = require("../controllers/homeworkController");
 
 // Teacher routes
-router.post(
-  "/",
-  authMiddleware,
-  authorizeRoles("teacher"),
-  createHomework
-);
+router.post("/", authMiddleware, authorizeRoles("teacher"), createHomework);
 
 router.get(
   "/teacher",
   authMiddleware,
   authorizeRoles("teacher"),
-  getTeacherHomework
+  getTeacherHomework,
 );
 
 // Student routes
@@ -33,22 +28,29 @@ router.get(
   "/student",
   authMiddleware,
   authorizeRoles("student"),
-  getStudentHomework
+  getStudentHomework,
 );
 
 router.patch(
   "/:homeworkId/complete",
   authMiddleware,
   authorizeRoles("student"),
-  completeHomework
+  completeHomework,
 );
 
 // Parent route
 router.get(
+  "/parent",
+  authMiddleware,
+  authorizeRoles("parent"),
+  getParentHomework
+);
+
+router.get(
   "/child/:childId",
   authMiddleware,
   authorizeRoles("parent"),
-  getChildHomework
+  getChildHomework,
 );
 
 module.exports = router;

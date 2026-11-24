@@ -1,4 +1,3 @@
-
 const Homework = require("../models/Homework");
 const SchoolClass = require("../models/Class");
 const User = require("../models/User");
@@ -8,12 +7,7 @@ const createHomework = async (req, res) => {
   try {
     const { title, description, dueDate, classId } = req.body;
 
-    if (
-      !title?.trim() ||
-      !description?.trim() ||
-      !dueDate ||
-      !classId
-    ) {
+    if (!title?.trim() || !description?.trim() || !dueDate || !classId) {
       return res.status(400).json({
         message: "Title, description, due date and class are required.",
       });
@@ -108,7 +102,7 @@ const getStudentHomework = async (req, res) => {
     const result = homework.map((task) => ({
       ...task.toObject(),
       status: task.completedBy.some(
-        (id) => id.toString() === student._id.toString()
+        (id) => id.toString() === student._id.toString(),
       )
         ? "completed"
         : "pending",
@@ -150,7 +144,7 @@ const completeHomework = async (req, res) => {
     }
 
     const alreadyCompleted = homework.completedBy.some(
-      (id) => id.toString() === student._id.toString()
+      (id) => id.toString() === student._id.toString(),
     );
 
     if (!alreadyCompleted) {
@@ -178,9 +172,7 @@ const getChildHomework = async (req, res) => {
 
     const parent = await User.findById(req.user.id);
 
-    if (!parent || !parent.children.some(
-      (id) => id.toString() === childId
-    )) {
+    if (!parent || !parent.children.some((id) => id.toString() === childId)) {
       return res.status(403).json({
         message: "You are not linked to this student.",
       });
@@ -209,7 +201,7 @@ const getChildHomework = async (req, res) => {
     const result = homework.map((task) => ({
       ...task.toObject(),
       status: task.completedBy.some(
-        (id) => id.toString() === child._id.toString()
+        (id) => id.toString() === child._id.toString(),
       )
         ? "completed"
         : "pending",
@@ -231,10 +223,75 @@ const getChildHomework = async (req, res) => {
   }
 };
 
+// PARENT: View homework for all linked children
+const getParentHomework = async (req, res) => {
+  try {
+    const parent = await User.findById(req.user.id).populate(
+      "children",
+      "name email role classId",
+    );
+
+    if (!parent) {
+      return res.status(404).json({
+        message: "Parent account not found.",
+      });
+    }
+
+    const childrenHomework = await Promise.all(
+      parent.children.map(async (child) => {
+        if (!child.classId) {
+          return {
+            child: {
+              id: child._id,
+              name: child.name,
+            },
+            homework: [],
+          };
+        }
+
+        const homework = await Homework.find({
+          schoolClass: child.classId,
+        })
+          .populate("schoolClass", "name grade section")
+          .populate("createdBy", "name email")
+          .sort({ dueDate: 1 });
+
+        const result = homework.map((task) => ({
+          ...task.toObject(),
+          status: task.completedBy.some(
+            (id) => id.toString() === child._id.toString(),
+          )
+            ? "completed"
+            : "pending",
+        }));
+
+        return {
+          child: {
+            id: child._id,
+            name: child.name,
+          },
+          homework: result,
+        };
+      }),
+    );
+
+    return res.status(200).json({
+      count: childrenHomework.length,
+      children: childrenHomework,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch children's homework.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createHomework,
   getTeacherHomework,
   getStudentHomework,
   completeHomework,
   getChildHomework,
+  getParentHomework,
 };

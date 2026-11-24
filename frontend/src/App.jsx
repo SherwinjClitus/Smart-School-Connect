@@ -2,9 +2,14 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
+
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import ParentDashboard from "./pages/ParentDashboard";
+
+import TeacherHomework from "./pages/TeacherHomework";
+import StudentHomework from "./pages/StudentHomework";
+import ParentHomework from "./pages/ParentHomework";
 
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -23,6 +28,10 @@ function App() {
           path="/student/dashboard"
           element={<StudentDashboard />}
         />
+        <Route
+          path="/student/homework"
+          element={<StudentHomework />}
+        />
       </Route>
 
       {/* Teacher routes */}
@@ -31,6 +40,10 @@ function App() {
           path="/teacher/dashboard"
           element={<TeacherDashboard />}
         />
+        <Route
+          path="/teacher/homework"
+          element={<TeacherHomework />}
+        />
       </Route>
 
       {/* Parent routes */}
@@ -38,6 +51,10 @@ function App() {
         <Route
           path="/parent/dashboard"
           element={<ParentDashboard />}
+        />
+        <Route
+          path="/parent/homework"
+          element={<ParentHomework />}
         />
       </Route>
 
