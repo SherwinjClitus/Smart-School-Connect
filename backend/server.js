@@ -5,11 +5,15 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const app = express();
+const classRoutes = require("./routes/classRoutes");
+const homeworkRoutes = require("./routes/homeworkRoutes");
 
 app.use(express.json());
 app.use(cors());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/classes", classRoutes);
+app.use("/api/homework", homeworkRoutes);
 
 app.get("/", (req, res) => {
   res.send("Smart School Connect Backend is running!");
