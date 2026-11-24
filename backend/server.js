@@ -21,6 +21,21 @@ app.get("/api/protected", authMiddleware, (req, res) => {
     user: req.user,
   });
 });
+
+const authorizeRoles = require("./middleware/authorizeRoles");
+
+app.get(
+  "/api/teacher-only",
+  authMiddleware,
+  authorizeRoles("teacher"),
+  (req, res) => {
+    res.status(200).json({
+      message: "Welcome, Teacher!",
+      user: req.user,
+    });
+  },
+);
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
