@@ -7,6 +7,9 @@ const authMiddleware = require("./middleware/authMiddleware");
 const app = express();
 const classRoutes = require("./routes/classRoutes");
 const homeworkRoutes = require("./routes/homeworkRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const conversationRoutes = require("./routes/conversationRoutes");
+
 
 app.use(express.json());
 app.use(cors());
@@ -14,6 +17,8 @@ app.use(cors());
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/homework", homeworkRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 app.get("/", (req, res) => {
   res.send("Smart School Connect Backend is running!");

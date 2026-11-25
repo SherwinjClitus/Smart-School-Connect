@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
@@ -10,6 +9,12 @@ import ParentDashboard from "./pages/ParentDashboard";
 import TeacherHomework from "./pages/TeacherHomework";
 import StudentHomework from "./pages/StudentHomework";
 import ParentHomework from "./pages/ParentHomework";
+import TeacherMessages from "./pages/TeacherMessages";
+import ParentMessages from "./pages/ParentMessages";
+
+import ParentInbox from "./features/conversations/pages/ParentInbox";
+import ConversationDetails from "./features/conversations/pages/ConversationDetails";
+import NewConversation from "./features/conversations/pages/NewConversation";
 
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -24,37 +29,34 @@ function App() {
 
       {/* Student routes */}
       <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-        <Route
-          path="/student/dashboard"
-          element={<StudentDashboard />}
-        />
-        <Route
-          path="/student/homework"
-          element={<StudentHomework />}
-        />
+        <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/homework" element={<StudentHomework />} />
       </Route>
 
       {/* Teacher routes */}
       <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
-        <Route
-          path="/teacher/dashboard"
-          element={<TeacherDashboard />}
-        />
-        <Route
-          path="/teacher/homework"
-          element={<TeacherHomework />}
-        />
+        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+        <Route path="/teacher/homework" element={<TeacherHomework />} />
+        <Route path="/teacher/messages" element={<TeacherMessages />} />
       </Route>
 
       {/* Parent routes */}
       <Route element={<ProtectedRoute allowedRoles={["parent"]} />}>
+        <Route path="/parent/dashboard" element={<ParentDashboard />} />
+        <Route path="/parent/homework" element={<ParentHomework />} />
+        <Route path="/parent/messages" element={<ParentMessages />} />
+        <Route path="/parent/conversations" element={<ParentInbox />} />
         <Route
-          path="/parent/dashboard"
-          element={<ParentDashboard />}
+          path="/parent/conversations/:conversationId"
+          element={<ConversationDetails />}
         />
+        <Route path="/parent/conversations" element={<ParentInbox />} />
+
+        <Route path="/parent/conversations/new" element={<NewConversation />} />
+
         <Route
-          path="/parent/homework"
-          element={<ParentHomework />}
+          path="/parent/conversations/:conversationId"
+          element={<ConversationDetails />}
         />
       </Route>
 

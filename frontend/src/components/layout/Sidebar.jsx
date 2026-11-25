@@ -32,6 +32,7 @@ function Sidebar({ mobileOpen, onClose }) {
     teacher: [
       { label: "Overview", path: "/teacher/dashboard" },
       { label: "Homework", path: "/teacher/homework" },
+      { label: "Messages", path: "/teacher/messages" },
     ],
     student: [
       { label: "Overview", path: "/student/dashboard" },
@@ -40,6 +41,8 @@ function Sidebar({ mobileOpen, onClose }) {
     parent: [
       { label: "Overview", path: "/parent/dashboard" },
       { label: "Children's Homework", path: "/parent/homework" },
+      { label: "Messages", path: "/parent/messages" },
+      { label: "Direct Messages", path: "/parent/conversations" },
     ],
   };
 
