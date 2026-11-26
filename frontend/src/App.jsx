@@ -9,12 +9,15 @@ import ParentDashboard from "./pages/ParentDashboard";
 import TeacherHomework from "./pages/TeacherHomework";
 import StudentHomework from "./pages/StudentHomework";
 import ParentHomework from "./pages/ParentHomework";
+
 import TeacherMessages from "./pages/TeacherMessages";
 import ParentMessages from "./pages/ParentMessages";
 
 import ParentInbox from "./features/conversations/pages/ParentInbox";
+import TeacherInbox from "./features/conversations/pages/TeacherInbox";
 import ConversationDetails from "./features/conversations/pages/ConversationDetails";
 import NewConversation from "./features/conversations/pages/NewConversation";
+import TeacherNewConversation from "./features/conversations/pages/TeacherNewConversation";
 
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -37,19 +40,31 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/homework" element={<TeacherHomework />} />
+        <Route
+          path="/teacher/conversations/new"
+          element={<TeacherNewConversation />}
+        />
+        {/* Class announcements */}
         <Route path="/teacher/messages" element={<TeacherMessages />} />
+
+        {/* Parent-teacher direct conversations */}
+        <Route path="/teacher/conversations" element={<TeacherInbox />} />
+
+        <Route
+          path="/teacher/conversations/:conversationId"
+          element={<ConversationDetails />}
+        />
       </Route>
 
       {/* Parent routes */}
       <Route element={<ProtectedRoute allowedRoles={["parent"]} />}>
         <Route path="/parent/dashboard" element={<ParentDashboard />} />
         <Route path="/parent/homework" element={<ParentHomework />} />
+
+        {/* Class announcements */}
         <Route path="/parent/messages" element={<ParentMessages />} />
-        <Route path="/parent/conversations" element={<ParentInbox />} />
-        <Route
-          path="/parent/conversations/:conversationId"
-          element={<ConversationDetails />}
-        />
+
+        {/* Parent-teacher direct conversations */}
         <Route path="/parent/conversations" element={<ParentInbox />} />
 
         <Route path="/parent/conversations/new" element={<NewConversation />} />

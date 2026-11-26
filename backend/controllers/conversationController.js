@@ -5,7 +5,7 @@ const ConversationMessage = require("../models/ConversationMessage");
 const User = require("../models/User");
 const SchoolClass = require("../models/Class");
 
-// Helper: Verify that the logged-in user participates in this conversation
+// Verify that the logged-in user participates in this conversation
 const getAuthorizedConversation = async (conversationId, userId) => {
   if (!mongoose.Types.ObjectId.isValid(conversationId)) {
     return null;
@@ -20,7 +20,13 @@ const getAuthorizedConversation = async (conversationId, userId) => {
 // CREATE CONVERSATION
 const createConversation = async (req, res) => {
   try {
-    const { studentId, parentId, subject, category, content } = req.body;
+    const {
+      studentId,
+      subject,
+      category,
+      content,
+      priority: requestedPriority,
+    } = req.body;
 
     if (!studentId || !subject?.trim() || !category || !content?.trim()) {
       return res.status(400).json({
@@ -28,28 +34,8 @@ const createConversation = async (req, res) => {
       });
     }
 
-    console.log("----- CONVERSATION ID DEBUG -----");
-    console.log("studentId:", studentId);
-    console.log("studentId type:", typeof studentId);
-    console.log("studentId valid:", mongoose.Types.ObjectId.isValid(studentId));
-
-    console.log("parentId:", parentId);
-    console.log(
-      "parentId valid:",
-      parentId ? mongoose.Types.ObjectId.isValid(parentId) : "Not provided",
-    );
-
-    console.log("Logged-in user:", req.user);
-
-    console.log("---------------------------------");
-
-    if (
-      !mongoose.Types.ObjectId.isValid(studentId) ||
-      (parentId && !mongoose.Types.ObjectId.isValid(parentId))
-    ) {
-      return res.status(400).json({
-        message: "Invalid student or parent ID",
-      });
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: "Invalid student ID" });
     }
 
     const allowedCategories = [
@@ -61,14 +47,23 @@ const createConversation = async (req, res) => {
     ];
 
     if (!allowedCategories.includes(category)) {
-      return res.status(400).json({
-        message: "Invalid conversation category",
-      });
+      return res.status(400).json({ message: "Invalid conversation category" });
     }
 
     if (subject.trim().length > 150 || content.trim().length > 5000) {
       return res.status(400).json({
         message: "Subject or message exceeds the allowed length",
+      });
+    }
+
+    // Teachers can independently select Normal or High priority.
+    if (
+      req.user.role === "teacher" &&
+      requestedPriority !== undefined &&
+      !["normal", "high"].includes(requestedPriority)
+    ) {
+      return res.status(400).json({
+        message: "Invalid conversation priority",
       });
     }
 
@@ -94,8 +89,8 @@ const createConversation = async (req, res) => {
     let parent;
     let teacher;
 
+    // PARENT INITIATED CONVERSATION
     if (req.user.role === "parent") {
-      // Parent can only create conversations about their linked children
       const isLinked = await User.exists({
         _id: req.user.id,
         role: "parent",
@@ -109,26 +104,22 @@ const createConversation = async (req, res) => {
       }
 
       parent = await User.findById(req.user.id);
+
       teacher = await User.findOne({
         _id: schoolClass.teacher,
         role: "teacher",
       });
-    } else if (req.user.role === "teacher") {
-      // Teacher must own the student's class
+    }
+
+    // TEACHER INITIATED CONVERSATION
+    else if (req.user.role === "teacher") {
       if (schoolClass.teacher.toString() !== req.user.id) {
         return res.status(403).json({
           message: "You are not authorized to contact this student",
         });
       }
 
-      if (!parentId) {
-        return res.status(400).json({
-          message: "Please provide a parent ID",
-        });
-      }
-
       parent = await User.findOne({
-        _id: parentId,
         role: "parent",
         children: student._id,
       });
@@ -146,8 +137,14 @@ const createConversation = async (req, res) => {
       });
     }
 
+    // Parent priority remains category-based.
+    // Teacher priority is independently selected and defaults to normal.
     const priority =
-      category === "urgent" || category === "attendance" ? "high" : "normal";
+      req.user.role === "teacher"
+        ? requestedPriority || "normal"
+        : category === "urgent" || category === "attendance"
+          ? "high"
+          : "normal";
 
     const conversation = await Conversation.create({
       subject: subject.trim(),
@@ -170,15 +167,16 @@ const createConversation = async (req, res) => {
     conversation.lastMessageAt = firstMessage.createdAt;
     await conversation.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Conversation created successfully",
       conversation,
       firstMessage,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Create conversation error:", error);
+
+    return res.status(500).json({
       message: "Failed to create conversation",
-      error: error.message,
     });
   }
 };
@@ -206,14 +204,15 @@ const getMyConversations = async (req, res) => {
       .populate("schoolClass", "name grade section")
       .sort({ lastMessageAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       count: conversations.length,
       conversations,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get conversations error:", error);
+
+    return res.status(500).json({
       message: "Failed to fetch conversations",
-      error: error.message,
     });
   }
 };
@@ -232,7 +231,7 @@ const getConversationMessages = async (req, res) => {
       });
     }
 
-    // Mark messages from the other participant as read
+    // Mark messages from the other participant as read.
     await ConversationMessage.updateMany(
       {
         conversation: conversation._id,
@@ -252,15 +251,16 @@ const getConversationMessages = async (req, res) => {
       .populate("sender", "name role")
       .sort({ createdAt: 1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       conversation,
       count: messages.length,
       messages,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get conversation messages error:", error);
+
+    return res.status(500).json({
       message: "Failed to fetch conversation messages",
-      error: error.message,
     });
   }
 };
@@ -293,10 +293,8 @@ const sendConversationMessage = async (req, res) => {
       });
     }
 
-    if (
-      conversation.status === "resolved" ||
-      conversation.status === "archived"
-    ) {
+    // Prevent replies to closed conversations.
+    if (["resolved", "archived"].includes(conversation.status)) {
       return res.status(400).json({
         message: "This conversation is closed and cannot receive new replies",
       });
@@ -311,22 +309,23 @@ const sendConversationMessage = async (req, res) => {
 
     conversation.lastMessageAt = newMessage.createdAt;
 
+    // Automatically move open conversations to in progress.
     if (conversation.status === "open") {
       conversation.status = "in_progress";
     }
 
     await conversation.save();
-
     await newMessage.populate("sender", "name role");
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Reply sent successfully",
       newMessage,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Send conversation message error:", error);
+
+    return res.status(500).json({
       message: "Failed to send reply",
-      error: error.message,
     });
   }
 };
@@ -359,18 +358,22 @@ const updateConversationStatus = async (req, res) => {
 
     conversation.resolvedAt = status === "resolved" ? new Date() : null;
 
-    conversation.archivedAt = status === "archived" ? new Date() : null;
+    // Resolved conversations move to Archived immediately.
+    conversation.archivedAt = ["resolved", "archived"].includes(status)
+      ? new Date()
+      : null;
 
     await conversation.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Conversation status updated successfully",
       conversation,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Update conversation status error:", error);
+
+    return res.status(500).json({
       message: "Failed to update conversation status",
-      error: error.message,
     });
   }
 };

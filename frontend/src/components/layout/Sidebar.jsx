@@ -3,19 +3,87 @@ import {
   Drawer,
   List,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Typography,
   Divider,
   useMediaQuery,
 } from "@mui/material";
 
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
+import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+
 import { useLocation, useNavigate } from "react-router-dom";
 
 const drawerWidth = 250;
 
+const roleLinks = {
+  teacher: [
+    {
+      label: "Overview",
+      path: "/teacher/dashboard",
+      icon: DashboardOutlinedIcon,
+    },
+    {
+      label: "Homework",
+      path: "/teacher/homework",
+      icon: MenuBookOutlinedIcon,
+    },
+    {
+      label: "Announcements",
+      path: "/teacher/messages",
+      icon: CampaignOutlinedIcon,
+    },
+    {
+      label: "Direct Messages",
+      path: "/teacher/conversations",
+      icon: ForumOutlinedIcon,
+    },
+  ],
+
+  student: [
+    {
+      label: "Overview",
+      path: "/student/dashboard",
+      icon: DashboardOutlinedIcon,
+    },
+    {
+      label: "My Homework",
+      path: "/student/homework",
+      icon: MenuBookOutlinedIcon,
+    },
+  ],
+
+  parent: [
+    {
+      label: "Overview",
+      path: "/parent/dashboard",
+      icon: DashboardOutlinedIcon,
+    },
+    {
+      label: "Children's Homework",
+      path: "/parent/homework",
+      icon: MenuBookOutlinedIcon,
+    },
+    {
+      label: "Announcements",
+      path: "/parent/messages",
+      icon: CampaignOutlinedIcon,
+    },
+    {
+      label: "Direct Messages",
+      path: "/parent/conversations",
+      icon: ForumOutlinedIcon,
+    },
+  ],
+};
+
 function Sidebar({ mobileOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+
   const isDesktop = useMediaQuery("(min-width:900px)");
 
   let user = null;
@@ -27,31 +95,35 @@ function Sidebar({ mobileOpen, onClose }) {
   }
 
   const role = user?.role || "student";
-
-  const roleLinks = {
-    teacher: [
-      { label: "Overview", path: "/teacher/dashboard" },
-      { label: "Homework", path: "/teacher/homework" },
-      { label: "Messages", path: "/teacher/messages" },
-    ],
-    student: [
-      { label: "Overview", path: "/student/dashboard" },
-      { label: "My Homework", path: "/student/homework" },
-    ],
-    parent: [
-      { label: "Overview", path: "/parent/dashboard" },
-      { label: "Children's Homework", path: "/parent/homework" },
-      { label: "Messages", path: "/parent/messages" },
-      { label: "Direct Messages", path: "/parent/conversations" },
-    ],
-  };
-
   const links = roleLinks[role] || [];
 
+  const isLinkActive = (path) => {
+    if (path.includes("/conversations")) {
+      return (
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+      );
+    }
+
+    return location.pathname === path;
+  };
+
   const drawerContent = (
-    <Box sx={{ height: "100%", bgcolor: "#fff" }}>
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "#FFFFFF",
+      }}
+    >
+      {/* Brand */}
       <Box sx={{ px: 3, py: 3 }}>
-        <Typography variant="h5" fontWeight={800} color="primary">
+        <Typography
+          variant="h5"
+          fontWeight={800}
+          color="primary"
+          letterSpacing="-0.5px"
+        >
           SchoolConnect
         </Typography>
 
@@ -62,14 +134,20 @@ function Sidebar({ mobileOpen, onClose }) {
 
       <Divider />
 
-      <Box sx={{ px: 2, py: 2 }}>
-        <Typography variant="overline" color="text.secondary" sx={{ px: 1 }}>
+      {/* Navigation */}
+      <Box sx={{ px: 2, py: 2, flex: 1 }}>
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ px: 1, fontWeight: 700, letterSpacing: 1 }}
+        >
           MAIN MENU
         </Typography>
 
         <List sx={{ mt: 1 }}>
           {links.map((link) => {
-            const active = location.pathname === link.path;
+            const active = isLinkActive(link.path);
+            const Icon = link.icon;
 
             return (
               <ListItemButton
@@ -80,37 +158,57 @@ function Sidebar({ mobileOpen, onClose }) {
                   onClose?.();
                 }}
                 sx={{
-                  borderRadius: 2,
-                  mb: 0.5,
+                  borderRadius: 2.5,
+                  mb: 0.75,
+                  minHeight: 48,
+                  transition: "all 0.2s ease",
+
+                  "& .MuiListItemIcon-root": {
+                    minWidth: 40,
+                    color: active ? "#1976D2" : "#64748B",
+                  },
+
+                  "& .MuiListItemText-primary": {
+                    fontSize: "0.95rem",
+                    fontWeight: active ? 700 : 500,
+                  },
+
                   "&.Mui-selected": {
-                    bgcolor: "#e8f0fe",
-                    color: "#1976d2",
+                    bgcolor: "#EAF2FF",
+                    color: "#1976D2",
+
                     "&:hover": {
-                      bgcolor: "#dce8fc",
+                      bgcolor: "#DFEAFC",
                     },
+                  },
+
+                  "&:hover": {
+                    bgcolor: "#F5F8FC",
                   },
                 }}
               >
-                <ListItemText
-                  primary={link.label}
-                  primaryTypographyProps={{
-                    fontWeight: active ? 700 : 500,
-                  }}
-                />
+                <ListItemIcon>
+                  <Icon />
+                </ListItemIcon>
+
+                <ListItemText primary={link.label} />
               </ListItemButton>
             );
           })}
         </List>
       </Box>
 
+      {/* User Information */}
       <Divider />
 
-      <Box sx={{ px: 3, py: 2 }}>
+      <Box sx={{ px: 3, py: 2.5 }}>
         <Typography variant="caption" color="text.secondary">
-          Signed in as
+          SIGNED IN AS
         </Typography>
 
-        <Typography fontWeight={600}>{user?.name || "User"}</Typography>
+        <Typography fontWeight={700} mt={0.5}>
+          {user?.name || "User"}
+        </Typography>
 
         <Typography
           variant="caption"
@@ -126,7 +224,10 @@ function Sidebar({ mobileOpen, onClose }) {
   return (
     <Box
       component="nav"
-      sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+      sx={{
+        width: { md: drawerWidth },
+        flexShrink: { md: 0 },
+      }}
     >
       <Drawer
         variant={isDesktop ? "permanent" : "temporary"}
@@ -139,7 +240,7 @@ function Sidebar({ mobileOpen, onClose }) {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            borderRight: "1px solid #e5e7eb",
+            borderRight: "1px solid #E5EAF1",
           },
         }}
       >

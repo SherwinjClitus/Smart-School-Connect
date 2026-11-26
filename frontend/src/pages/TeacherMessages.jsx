@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -19,8 +18,11 @@ import {
   Typography,
 } from "@mui/material";
 
+import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+
 import api from "../services/api";
 import DashboardLayout from "../components/layout/DashboardLayout";
+import CategoryChip from "../components/common/CategoryChip";
 
 const categories = [
   { value: "announcement", label: "Announcement" },
@@ -59,7 +61,7 @@ function TeacherMessages() {
       setMessages(messageResponse.data.messages || []);
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to load messaging data."
+        err.response?.data?.message || "Failed to load announcement data.",
       );
     } finally {
       setLoading(false);
@@ -75,7 +77,9 @@ function TeacherMessages() {
     setSuccess("");
 
     if (!classId || !subject.trim() || !content.trim()) {
-      setError("Please select a class and enter both subject and message.");
+      setError(
+        "Please select a class and enter both subject and announcement.",
+      );
       return;
     }
 
@@ -96,7 +100,7 @@ function TeacherMessages() {
       });
 
       setSuccess(
-        `Message sent successfully to ${response.data.recipientCount} parent(s).`
+        `Announcement sent successfully to ${response.data.recipientCount} recipient(s).`,
       );
 
       setSubject("");
@@ -106,7 +110,7 @@ function TeacherMessages() {
       await loadPageData();
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to send the message."
+        err.response?.data?.message || "Failed to send the announcement.",
       );
     } finally {
       setSending(false);
@@ -126,13 +130,26 @@ function TeacherMessages() {
   return (
     <DashboardLayout>
       <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-        <Typography variant="h4" fontWeight={700} mb={1}>
-          Messages
-        </Typography>
+        {/* Page Heading */}
+        <Stack direction="row" spacing={1.5} alignItems="center" mb={1}>
+          <CampaignOutlinedIcon color="primary" sx={{ fontSize: 34 }} />
+
+          <Typography variant="h4" fontWeight={700}>
+            Announcements
+          </Typography>
+        </Stack>
 
         <Typography color="text.secondary" mb={3}>
-          Send announcements and updates to parents of your students.
+          Share official school and class updates with students and their
+          parents.
         </Typography>
+
+        {/* Explanation */}
+        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+          Announcements are official class-wide updates, such as exam schedules,
+          holidays, homework reminders, and school events. For private
+          discussions about an individual student, use Direct Messages.
+        </Alert>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -146,10 +163,16 @@ function TeacherMessages() {
           </Alert>
         )}
 
+        {/* Create Announcement */}
         <Card sx={{ mb: 4, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight={700} mb={3}>
-              Compose Message
+            <Typography variant="h6" fontWeight={700} mb={1}>
+              Create Announcement
+            </Typography>
+
+            <Typography color="text.secondary" variant="body2" mb={3}>
+              Your announcement will be shared with the selected class's
+              recipients.
             </Typography>
 
             <Stack spacing={2.5}>
@@ -161,10 +184,7 @@ function TeacherMessages() {
                 onChange={(e) => setClassId(e.target.value)}
               >
                 {classes.map((schoolClass) => (
-                  <MenuItem
-                    key={schoolClass._id}
-                    value={schoolClass._id}
-                  >
+                  <MenuItem key={schoolClass._id} value={schoolClass._id}>
                     {schoolClass.name}
                   </MenuItem>
                 ))}
@@ -173,7 +193,7 @@ function TeacherMessages() {
               <TextField
                 select
                 fullWidth
-                label="Message Category"
+                label="Announcement Category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
@@ -195,7 +215,7 @@ function TeacherMessages() {
                 fullWidth
                 multiline
                 minRows={5}
-                label="Write your message"
+                label="Write your announcement"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 inputProps={{ maxLength: 5000 }}
@@ -208,21 +228,33 @@ function TeacherMessages() {
                   size="large"
                   onClick={handlePreview}
                 >
-                  Preview Message
+                  Preview Announcement
                 </Button>
               </Box>
             </Stack>
           </CardContent>
         </Card>
 
+        {/* Sent Announcements */}
         <Typography variant="h5" fontWeight={700} mb={2}>
-          Previously Sent Messages
+          Sent Announcements
         </Typography>
 
         {messages.length === 0 ? (
-          <Typography color="text.secondary">
-            You haven't sent any messages yet.
-          </Typography>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ py: 4, textAlign: "center" }}>
+              <CampaignOutlinedIcon
+                color="disabled"
+                sx={{ fontSize: 42, mb: 1 }}
+              />
+
+              <Typography fontWeight={600}>No announcements yet</Typography>
+
+              <Typography color="text.secondary" variant="body2">
+                Your sent announcements will appear here.
+              </Typography>
+            </CardContent>
+          </Card>
         ) : (
           <Stack spacing={2}>
             {messages.map((message) => (
@@ -240,12 +272,7 @@ function TeacherMessages() {
                       {message.subject}
                     </Typography>
 
-                    <Chip
-                      label={categories.find(
-                        (item) => item.value === message.category
-                      )?.label || "General Update"}
-                      size="small"
-                    />
+                    <CategoryChip category={message.category} />
                   </Stack>
 
                   <Typography color="text.secondary" variant="body2" mb={1}>
@@ -262,8 +289,7 @@ function TeacherMessages() {
                     display="block"
                     mt={2}
                   >
-                    Sent on:{" "}
-                    {new Date(message.createdAt).toLocaleString()}
+                    Sent on: {new Date(message.createdAt).toLocaleString()}
                   </Typography>
                 </CardContent>
               </Card>
@@ -271,26 +297,36 @@ function TeacherMessages() {
           </Stack>
         )}
 
+        {/* Preview Dialog */}
         <Dialog
           open={previewOpen}
           onClose={() => setPreviewOpen(false)}
           fullWidth
           maxWidth="sm"
         >
-          <DialogTitle>Preview Message</DialogTitle>
+          <DialogTitle>Preview Announcement</DialogTitle>
 
           <DialogContent>
             <Typography fontWeight={700} mt={1}>
               Class
             </Typography>
+
             <Typography mb={2}>
               {classes.find((item) => item._id === classId)?.name}
             </Typography>
 
+            <Typography fontWeight={700}>Category</Typography>
+
+            <Typography mb={2}>
+              {categories.find((item) => item.value === category)?.label}
+            </Typography>
+
             <Typography fontWeight={700}>Subject</Typography>
+
             <Typography mb={2}>{subject}</Typography>
 
-            <Typography fontWeight={700}>Message</Typography>
+            <Typography fontWeight={700}>Announcement</Typography>
+
             <Typography sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
               {content}
             </Typography>
@@ -298,14 +334,10 @@ function TeacherMessages() {
 
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={() => setPreviewOpen(false)}>
-              Edit Message
+              Edit Announcement
             </Button>
 
-            <Button
-              variant="contained"
-              onClick={handleSend}
-              disabled={sending}
-            >
+            <Button variant="contained" onClick={handleSend} disabled={sending}>
               {sending ? "Sending..." : "Confirm & Send"}
             </Button>
           </DialogActions>

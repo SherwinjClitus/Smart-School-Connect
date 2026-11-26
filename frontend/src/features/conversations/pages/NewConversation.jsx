@@ -178,36 +178,50 @@ function NewConversation() {
 
   return (
     <DashboardLayout>
-      <Box sx={{ maxWidth: 850, mx: "auto" }}>
+      <Box sx={{ maxWidth: 850, mx: "auto", pb: 4 }}>
         {/* Back Button */}
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/parent/conversations")}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, textTransform: "none", alignSelf: "flex-start" }}
           disabled={submitting}
         >
           Back to Inbox
         </Button>
 
         {/* Page Heading */}
-        <Typography variant="h4" fontWeight={700}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            lineHeight: 1.2,
+            fontSize: { xs: "1.6rem", sm: "2rem" },
+          }}
+        >
           New Conversation
         </Typography>
 
-        <Typography color="text.secondary" mt={0.5} mb={3}>
+        <Typography sx={{ color: "text.secondary", mt: 0.5, mb: 3 }}>
           Start a private conversation with your child's teacher.
         </Typography>
 
         {/* Conversation Form */}
         <Card sx={{ borderRadius: 3 }}>
-          <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+          <CardContent
+            sx={{
+              p: { xs: 2, sm: 4 },
+              "&:last-child": { pb: { xs: 2, sm: 4 } },
+            }}
+          >
             {/* Loading State */}
             {loadingChildren ? (
               <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                py={6}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  py: 6,
+                }}
               >
                 <CircularProgress />
               </Box>
@@ -311,14 +325,18 @@ function NewConversation() {
                       {/* Action Buttons */}
                       <Stack
                         direction="row"
-                        justifyContent="flex-end"
-                        gap={2}
-                        flexWrap="wrap"
+                        sx={{
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: 2,
+                        }}
                       >
                         <Button
                           variant="outlined"
                           onClick={() => navigate("/parent/conversations")}
                           disabled={submitting}
+                          sx={{ textTransform: "none", minHeight: 40 }}
                         >
                           Cancel
                         </Button>
@@ -333,6 +351,7 @@ function NewConversation() {
                             !subject.trim() ||
                             !content.trim()
                           }
+                          sx={{ textTransform: "none", minHeight: 40 }}
                         >
                           {submitting ? "Creating..." : "Create Conversation"}
                         </Button>
