@@ -19,6 +19,7 @@ import {
   Tab,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
@@ -106,6 +107,8 @@ function formatDate(date) {
 
 function TeacherInbox() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +117,35 @@ function TeacherInbox() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [view, setView] = useState("inbox");
+
+  // Theme-aware reusable styles
+  const cardSx = {
+    bgcolor: "background.paper",
+    color: "text.primary",
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 2.5,
+    backgroundImage: "none",
+  };
+
+  const inputSx = {
+    "& .MuiOutlinedInput-root": {
+      bgcolor: "background.default",
+      color: "text.primary",
+      borderRadius: 2,
+      "& fieldset": {
+        borderColor: "divider",
+      },
+      "&:hover fieldset": {
+        borderColor: "text.secondary",
+      },
+    },
+    "& .MuiInputLabel-root": {
+      color: "text.secondary",
+    },
+    "& .MuiSelect-icon": {
+      color: "text.secondary",
+    },
+  };
 
   // Fetch conversations
   const loadConversations = async () => {
@@ -160,7 +192,6 @@ function TeacherInbox() {
   const filteredConversations = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    // Inbox contains active conversations; Archived contains completed ones.
     const conversationsForView = conversations.filter((item) => {
       if (view === "inbox") {
         return ["open", "in_progress"].includes(item.status);
@@ -229,7 +260,14 @@ function TeacherInbox() {
 
   return (
     <DashboardLayout title="Direct Messages">
-      <Box sx={{ maxWidth: 1200, mx: "auto", pb: 4 }}>
+      <Box
+        sx={{
+          maxWidth: 1200,
+          mx: "auto",
+          pb: 4,
+          color: "text.primary",
+        }}
+      >
         {/* Page Heading */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -251,8 +289,8 @@ function TeacherInbox() {
                   height: 42,
                   flexShrink: 0,
                   borderRadius: 2,
-                  bgcolor: "#EAF2FF",
-                  color: "#1976D2",
+                  bgcolor: isDark ? "rgba(96,165,250,0.16)" : "#EAF2FF",
+                  color: isDark ? "#93C5FD" : "#1976D2",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -265,7 +303,7 @@ function TeacherInbox() {
                 variant="h4"
                 sx={{
                   fontWeight: 800,
-                  color: "#1E293B",
+                  color: "text.primary",
                   letterSpacing: "-0.6px",
                   fontSize: { xs: "1.6rem", sm: "2rem" },
                   lineHeight: 1.2,
@@ -358,13 +396,19 @@ function TeacherInbox() {
                 sx={{
                   position: "relative",
                   minHeight: 115,
-                  background: item.background,
-                  border: `1px solid ${item.border}`,
+                  bgcolor: isDark ? "background.paper" : item.background,
+                  color: "text.primary",
+                  border: `1px solid ${
+                    isDark ? theme.palette.divider : item.border
+                  }`,
                   borderRadius: 2.5,
                   transition: "0.2s ease",
+                  backgroundImage: "none",
                   "&:hover": {
                     transform: "translateY(-2px)",
-                    boxShadow: "0 6px 16px rgba(25,118,210,0.08)",
+                    boxShadow: isDark
+                      ? "0 6px 16px rgba(0,0,0,0.2)"
+                      : "0 6px 16px rgba(25,118,210,0.08)",
                   },
                 }}
               >
@@ -384,7 +428,7 @@ function TeacherInbox() {
                     variant="h4"
                     sx={{
                       fontWeight: 800,
-                      color: "#263B53",
+                      color: "text.primary",
                       mt: 1.5,
                       fontSize: { xs: "1.75rem", sm: "2rem" },
                       lineHeight: 1.2,
@@ -401,12 +445,14 @@ function TeacherInbox() {
                       width: 40,
                       height: 40,
                       borderRadius: 2,
-                      bgcolor: "#FFFFFF",
+                      bgcolor: isDark ? "background.default" : "#FFFFFF",
                       color: item.color,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: "0 3px 10px rgba(15,23,42,0.06)",
+                      boxShadow: isDark
+                        ? "none"
+                        : "0 3px 10px rgba(15,23,42,0.06)",
                     }}
                   >
                     <Icon sx={{ fontSize: 22 }} />
@@ -421,7 +467,7 @@ function TeacherInbox() {
         <Box
           sx={{
             mb: 2.5,
-            borderBottom: "1px solid #E1EAF5",
+            borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
           <Tabs
@@ -432,6 +478,8 @@ function TeacherInbox() {
               setSearch("");
             }}
             variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
             sx={{
               minHeight: 46,
               "& .MuiTab-root": {
@@ -439,8 +487,11 @@ function TeacherInbox() {
                 textTransform: "none",
                 fontWeight: 700,
                 fontSize: "0.9rem",
+                color: "text.secondary",
               },
-              "& .Mui-selected": { color: "#1976D2" },
+              "& .Mui-selected": {
+                color: "primary.main",
+              },
               "& .MuiTabs-indicator": {
                 height: 3,
                 borderRadius: 2,
@@ -456,14 +507,19 @@ function TeacherInbox() {
         <Card
           elevation={0}
           sx={{
-            borderRadius: 2.5,
-            border: "1px solid #E1EAF5",
-            background: "#F8FBFF",
+            ...cardSx,
             mb: 3,
           }}
         >
           <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", mb: 1.5 }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                mb: 1.5,
+                color: "text.primary",
+              }}
+            >
               Find Conversations
             </Typography>
 
@@ -474,25 +530,27 @@ function TeacherInbox() {
                 placeholder="Search by subject, parent, student or class..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <SearchRoundedIcon
-                      sx={{ mr: 1, color: "text.secondary", fontSize: 21 }}
-                    />
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#FFFFFF",
-                    borderRadius: 2,
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <SearchRoundedIcon
+                        sx={{
+                          mr: 1,
+                          color: "text.secondary",
+                          fontSize: 21,
+                        }}
+                      />
+                    ),
                   },
                 }}
+                sx={inputSx}
               />
 
               <FormControl
                 size="small"
                 sx={{
                   minWidth: { xs: "100%", sm: 200 },
+                  ...inputSx,
                 }}
               >
                 <InputLabel>Status</InputLabel>
@@ -501,14 +559,20 @@ function TeacherInbox() {
                   value={statusFilter}
                   label="Status"
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  sx={{
-                    bgcolor: "#FFFFFF",
-                    borderRadius: 2,
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: "background.paper",
+                        color: "text.primary",
+                        backgroundImage: "none",
+                      },
+                    },
                   }}
                 >
                   <MenuItem value="all">
                     {view === "inbox" ? "All Active" : "All Archived"}
                   </MenuItem>
+
                   {view === "inbox" ? (
                     <>
                       <MenuItem value="open">Open</MenuItem>
@@ -540,7 +604,7 @@ function TeacherInbox() {
             variant="h5"
             sx={{
               fontWeight: 800,
-              color: "#1E293B",
+              color: "text.primary",
               fontSize: { xs: "1.25rem", sm: "1.5rem" },
               lineHeight: 1.3,
             }}
@@ -555,8 +619,8 @@ function TeacherInbox() {
             size="small"
             sx={{
               height: 25,
-              bgcolor: "#EAF2FF",
-              color: "#1976D2",
+              bgcolor: isDark ? "rgba(96,165,250,0.16)" : "#EAF2FF",
+              color: isDark ? "#93C5FD" : "#1976D2",
               fontWeight: 700,
             }}
           />
@@ -572,9 +636,7 @@ function TeacherInbox() {
           <Card
             elevation={0}
             sx={{
-              border: "1px solid #DCE9FA",
-              borderRadius: 2.5,
-              background: "#F5F9FF",
+              ...cardSx,
             }}
           >
             <CardContent sx={{ py: 5, textAlign: "center" }}>
@@ -582,8 +644,8 @@ function TeacherInbox() {
                 sx={{
                   width: 54,
                   height: 54,
-                  bgcolor: "#E1EDFF",
-                  color: "#1976D2",
+                  bgcolor: isDark ? "rgba(96,165,250,0.16)" : "#E1EDFF",
+                  color: isDark ? "#93C5FD" : "#1976D2",
                   mx: "auto",
                   mb: 1.5,
                 }}
@@ -591,7 +653,10 @@ function TeacherInbox() {
                 <ForumOutlinedIcon fontSize="medium" />
               </Avatar>
 
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: "text.primary" }}
+              >
                 No conversations found
               </Typography>
 
@@ -645,13 +710,13 @@ function TeacherInbox() {
                   key={conversation._id}
                   elevation={0}
                   sx={{
-                    border: "1px solid #E1EAF5",
-                    borderRadius: 2.5,
-                    background: "#FFFFFF",
+                    ...cardSx,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      borderColor: "#A9C9F5",
-                      boxShadow: "0 5px 16px rgba(15,23,42,0.06)",
+                      borderColor: "primary.main",
+                      boxShadow: isDark
+                        ? "0 5px 16px rgba(0,0,0,0.2)"
+                        : "0 5px 16px rgba(15,23,42,0.06)",
                     },
                   }}
                 >
@@ -676,7 +741,7 @@ function TeacherInbox() {
                         variant="h6"
                         sx={{
                           fontWeight: 700,
-                          color: "#263B53",
+                          color: "text.primary",
                           fontSize: "1.05rem",
                           lineHeight: 1.4,
                           overflowWrap: "anywhere",
@@ -711,13 +776,14 @@ function TeacherInbox() {
                         mb: 1.5,
                       }}
                     >
+                      {/* Parent */}
                       <Box
                         sx={{
                           px: 1.5,
                           py: 1.2,
                           borderRadius: 2,
-                          bgcolor: "#F5F9FF",
-                          border: "1px solid #E1EAF5",
+                          bgcolor: isDark ? "rgba(96,165,250,0.08)" : "#F5F9FF",
+                          border: `1px solid ${theme.palette.divider}`,
                         }}
                       >
                         <Typography
@@ -735,7 +801,7 @@ function TeacherInbox() {
                         <Typography
                           sx={{
                             fontWeight: 600,
-                            color: "#263B53",
+                            color: "text.primary",
                             fontSize: "0.9rem",
                             lineHeight: 1.5,
                           }}
@@ -744,13 +810,14 @@ function TeacherInbox() {
                         </Typography>
                       </Box>
 
+                      {/* Student */}
                       <Box
                         sx={{
                           px: 1.5,
                           py: 1.2,
                           borderRadius: 2,
-                          bgcolor: "#F0FAF8",
-                          border: "1px solid #D4EEE8",
+                          bgcolor: isDark ? "rgba(45,212,191,0.08)" : "#F0FAF8",
+                          border: `1px solid ${theme.palette.divider}`,
                         }}
                       >
                         <Typography
@@ -768,7 +835,7 @@ function TeacherInbox() {
                         <Typography
                           sx={{
                             fontWeight: 600,
-                            color: "#263B53",
+                            color: "text.primary",
                             fontSize: "0.9rem",
                             lineHeight: 1.5,
                           }}
@@ -784,7 +851,7 @@ function TeacherInbox() {
                       sx={{ alignItems: "center", gap: 0.8, mb: 1.5 }}
                     >
                       <SchoolOutlinedIcon
-                        sx={{ fontSize: 18, color: "#1976D2" }}
+                        sx={{ fontSize: 18, color: "primary.main" }}
                       />
 
                       <Typography
@@ -794,7 +861,10 @@ function TeacherInbox() {
                         Class:{" "}
                         <Box
                           component="span"
-                          sx={{ fontWeight: 700, color: "#334155" }}
+                          sx={{
+                            fontWeight: 700,
+                            color: "text.primary",
+                          }}
                         >
                           {conversation.schoolClass?.name || "Unknown"}
                         </Box>
@@ -843,7 +913,7 @@ function TeacherInbox() {
                     <Box
                       sx={{
                         pt: 1.5,
-                        borderTop: "1px solid #EAF0F6",
+                        borderTop: `1px solid ${theme.palette.divider}`,
                       }}
                     >
                       <Stack

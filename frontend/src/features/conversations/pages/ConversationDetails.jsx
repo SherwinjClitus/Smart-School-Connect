@@ -19,6 +19,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
@@ -73,6 +74,8 @@ function formatDate(date) {
 function ConversationDetails() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   const currentUser = getCurrentUser();
   const currentRole = currentUser.role || "parent";
@@ -91,6 +94,42 @@ function ConversationDetails() {
   const [error, setError] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusSuccess, setStatusSuccess] = useState("");
+
+  // Theme-aware common styles
+  const infoCardSx = {
+    borderRadius: 3,
+    border: "1px solid",
+    borderColor: "divider",
+    bgcolor: "background.paper",
+    color: "text.primary",
+    backgroundImage: "none",
+  };
+
+  const fieldSx = {
+    "& .MuiOutlinedInput-root": {
+      bgcolor: "background.default",
+      color: "text.primary",
+      borderRadius: 3,
+      "& fieldset": {
+        borderColor: "divider",
+      },
+    },
+    "& .MuiInputBase-input::placeholder": {
+      color: "text.secondary",
+      opacity: 1,
+    },
+  };
+
+  const menuProps = {
+    PaperProps: {
+      sx: {
+        bgcolor: "background.paper",
+        color: "text.primary",
+        backgroundImage: "none",
+        border: `1px solid ${theme.palette.divider}`,
+      },
+    },
+  };
 
   // Load conversation and its messages
   const loadConversation = async () => {
@@ -170,10 +209,8 @@ function ConversationDetails() {
       setConversation((previous) => ({
         ...previous,
         status: newStatus,
-        resolvedAt:
-          newStatus === "resolved" ? new Date().toISOString() : null,
-        archivedAt:
-          newStatus === "archived" ? new Date().toISOString() : null,
+        resolvedAt: newStatus === "resolved" ? new Date().toISOString() : null,
+        archivedAt: newStatus === "archived" ? new Date().toISOString() : null,
       }));
 
       const messages = {
@@ -186,8 +223,7 @@ function ConversationDetails() {
       setStatusSuccess(messages[newStatus] || "Status updated successfully.");
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-          "Unable to update conversation status."
+        err.response?.data?.message || "Unable to update conversation status.",
       );
     } finally {
       setUpdatingStatus(false);
@@ -196,13 +232,6 @@ function ConversationDetails() {
 
   const isClosed =
     conversation?.status === "resolved" || conversation?.status === "archived";
-
-  // Shared style for the four info cards
-  const infoCardSx = {
-    borderRadius: 3,
-    border: "1px solid",
-    borderColor: "divider",
-  };
 
   // Loading screen
   if (loading) {
@@ -270,6 +299,7 @@ function ConversationDetails() {
           maxWidth: 1150,
           mx: "auto",
           pb: 5,
+          color: "text.primary",
         }}
       >
         {/* Back Navigation */}
@@ -298,7 +328,11 @@ function ConversationDetails() {
             borderRadius: 4,
             border: "1px solid",
             borderColor: "divider",
-            background: "linear-gradient(135deg, #ffffff 0%, #f1f6ff 100%)",
+            bgcolor: "background.paper",
+            color: "text.primary",
+            backgroundImage: isDark
+              ? "linear-gradient(135deg, #1F2937 0%, #172554 100%)"
+              : "linear-gradient(135deg, #ffffff 0%, #f1f6ff 100%)",
           }}
         >
           <Stack
@@ -312,7 +346,12 @@ function ConversationDetails() {
             <Box sx={{ minWidth: 0 }}>
               <Stack
                 direction="row"
-                sx={{ alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}
+                sx={{
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mb: 1.5,
+                }}
               >
                 <Chip
                   label={category}
@@ -333,7 +372,7 @@ function ConversationDetails() {
                 variant="h4"
                 sx={{
                   fontWeight: 800,
-                  color: "#172B4D",
+                  color: "text.primary",
                   letterSpacing: "-0.7px",
                   lineHeight: 1.25,
                   fontSize: { xs: "1.6rem", sm: "2rem" },
@@ -357,17 +396,18 @@ function ConversationDetails() {
                 sx={{
                   minWidth: 160,
                   flexShrink: 0,
-                  bgcolor: "#FFFFFF",
-                  borderRadius: 2,
+                  ...fieldSx,
                 }}
               >
                 <InputLabel id="conversation-status-label">Status</InputLabel>
+
                 <Select
                   labelId="conversation-status-label"
                   value={conversation.status}
                   label="Status"
                   onChange={handleStatusChange}
                   disabled={updatingStatus}
+                  MenuProps={menuProps}
                   sx={{
                     borderRadius: 2,
                     textTransform: "capitalize",
@@ -418,8 +458,8 @@ function ConversationDetails() {
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Avatar
                 sx={{
-                  bgcolor: "#E8F1FF",
-                  color: "#2563EB",
+                  bgcolor: isDark ? "rgba(96,165,250,0.16)" : "#E8F1FF",
+                  color: isDark ? "#93C5FD" : "#2563EB",
                   mb: 1.5,
                 }}
               >
@@ -434,7 +474,12 @@ function ConversationDetails() {
               </Typography>
 
               <Typography
-                sx={{ fontWeight: 700, mt: 0.5, overflowWrap: "anywhere" }}
+                sx={{
+                  fontWeight: 700,
+                  mt: 0.5,
+                  overflowWrap: "anywhere",
+                  color: "text.primary",
+                }}
               >
                 {conversation.student?.name || "Unknown"}
               </Typography>
@@ -446,8 +491,8 @@ function ConversationDetails() {
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Avatar
                 sx={{
-                  bgcolor: "#E9F8F1",
-                  color: "#15976A",
+                  bgcolor: isDark ? "rgba(52,211,153,0.14)" : "#E9F8F1",
+                  color: isDark ? "#6EE7B7" : "#15976A",
                   mb: 1.5,
                 }}
               >
@@ -462,7 +507,12 @@ function ConversationDetails() {
               </Typography>
 
               <Typography
-                sx={{ fontWeight: 700, mt: 0.5, overflowWrap: "anywhere" }}
+                sx={{
+                  fontWeight: 700,
+                  mt: 0.5,
+                  overflowWrap: "anywhere",
+                  color: "text.primary",
+                }}
               >
                 {conversation.teacher?.name || "Unknown"}
               </Typography>
@@ -474,8 +524,8 @@ function ConversationDetails() {
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Avatar
                 sx={{
-                  bgcolor: "#F3EDFF",
-                  color: "#805AD5",
+                  bgcolor: isDark ? "rgba(167,139,250,0.15)" : "#F3EDFF",
+                  color: isDark ? "#C4B5FD" : "#805AD5",
                   mb: 1.5,
                 }}
               >
@@ -490,7 +540,12 @@ function ConversationDetails() {
               </Typography>
 
               <Typography
-                sx={{ fontWeight: 700, mt: 0.5, overflowWrap: "anywhere" }}
+                sx={{
+                  fontWeight: 700,
+                  mt: 0.5,
+                  overflowWrap: "anywhere",
+                  color: "text.primary",
+                }}
               >
                 {conversation.schoolClass?.name || "Unknown"}
               </Typography>
@@ -502,8 +557,8 @@ function ConversationDetails() {
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Avatar
                 sx={{
-                  bgcolor: "#FFF3E8",
-                  color: "#E58B26",
+                  bgcolor: isDark ? "rgba(251,146,60,0.14)" : "#FFF3E8",
+                  color: isDark ? "#FDBA74" : "#E58B26",
                   mb: 1.5,
                 }}
               >
@@ -522,6 +577,7 @@ function ConversationDetails() {
                   fontWeight: 700,
                   mt: 0.5,
                   textTransform: "capitalize",
+                  color: "text.primary",
                 }}
               >
                 {conversation.priority}
@@ -537,8 +593,11 @@ function ConversationDetails() {
             borderRadius: 4,
             border: "1px solid",
             borderColor: "divider",
+            bgcolor: "background.paper",
+            color: "text.primary",
             overflow: "hidden",
             mb: 3,
+            backgroundImage: "none",
           }}
         >
           {/* Message History Header */}
@@ -584,7 +643,7 @@ function ConversationDetails() {
               minHeight: 280,
               maxHeight: 650,
               overflowY: "auto",
-              bgcolor: "#F8FAFD",
+              bgcolor: "background.default",
             }}
           >
             {messages.length === 0 ? (
@@ -633,7 +692,9 @@ function ConversationDetails() {
                             width: 38,
                             height: 38,
                             flexShrink: 0,
-                            bgcolor: isCurrentUser ? "#2563EB" : "#64748B",
+                            bgcolor: isCurrentUser
+                              ? "primary.main"
+                              : "text.secondary",
                             fontWeight: 700,
                           }}
                         >
@@ -679,12 +740,17 @@ function ConversationDetails() {
                               borderRadius: isCurrentUser
                                 ? "18px 18px 4px 18px"
                                 : "18px 18px 18px 4px",
-                              bgcolor: isCurrentUser ? "#2563EB" : "#FFFFFF",
-                              color: isCurrentUser ? "#FFFFFF" : "#25334A",
+                              bgcolor: isCurrentUser
+                                ? "primary.main"
+                                : "background.paper",
+                              color: isCurrentUser ? "#FFFFFF" : "text.primary",
                               border: isCurrentUser
                                 ? "none"
-                                : "1px solid #E5EAF1",
-                              boxShadow: "0 2px 8px rgba(15,23,42,0.04)",
+                                : `1px solid ${theme.palette.divider}`,
+                              boxShadow: isDark
+                                ? "none"
+                                : "0 2px 8px rgba(15,23,42,0.04)",
+                              backgroundImage: "none",
                             }}
                           >
                             <Typography
@@ -742,13 +808,15 @@ function ConversationDetails() {
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
+              bgcolor: "background.paper",
+              color: "text.primary",
             }}
           >
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Avatar
                 sx={{
-                  bgcolor: "#E9F8F1",
-                  color: "#15976A",
+                  bgcolor: isDark ? "rgba(52,211,153,0.14)" : "#E9F8F1",
+                  color: isDark ? "#6EE7B7" : "#15976A",
                 }}
               >
                 <LockOutlinedIcon />
@@ -774,7 +842,9 @@ function ConversationDetails() {
               borderRadius: 4,
               border: "1px solid",
               borderColor: "divider",
-              boxShadow: "0 4px 18px rgba(15,23,42,0.04)",
+              bgcolor: "background.paper",
+              color: "text.primary",
+              boxShadow: isDark ? "none" : "0 4px 18px rgba(15,23,42,0.04)",
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
@@ -795,12 +865,7 @@ function ConversationDetails() {
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 disabled={sending}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 3,
-                    bgcolor: "#F8FAFD",
-                  },
-                }}
+                sx={fieldSx}
               />
 
               <Stack

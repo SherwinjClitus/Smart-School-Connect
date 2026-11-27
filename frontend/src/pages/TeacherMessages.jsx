@@ -16,6 +16,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
@@ -32,6 +33,9 @@ const categories = [
 ];
 
 function TeacherMessages() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
   const [classes, setClasses] = useState([]);
   const [messages, setMessages] = useState([]);
 
@@ -46,6 +50,32 @@ function TeacherMessages() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const cardSx = {
+    bgcolor: "background.paper",
+    color: "text.primary",
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 3,
+    boxShadow: isDark
+      ? "0 2px 8px rgba(0,0,0,0.18)"
+      : "0 2px 8px rgba(15,23,42,0.04)",
+  };
+
+  const fieldSx = {
+    "& .MuiInputLabel-root": {
+      color: "text.secondary",
+    },
+    "& .MuiInputBase-root": {
+      color: "text.primary",
+      bgcolor: "background.paper",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "divider",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "text.secondary",
+    },
+  };
 
   const loadPageData = async () => {
     try {
@@ -120,7 +150,13 @@ function TeacherMessages() {
   if (loading) {
     return (
       <DashboardLayout>
-        <Box display="flex" justifyContent="center" py={8}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+          bgcolor="background.default"
+        >
           <CircularProgress />
         </Box>
       </DashboardLayout>
@@ -129,7 +165,13 @@ function TeacherMessages() {
 
   return (
     <DashboardLayout>
-      <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+      <Box
+        sx={{
+          maxWidth: 1000,
+          mx: "auto",
+          color: "text.primary",
+        }}
+      >
         {/* Page Heading */}
         <Stack direction="row" spacing={1.5} alignItems="center" mb={1}>
           <CampaignOutlinedIcon color="primary" sx={{ fontSize: 34 }} />
@@ -164,8 +206,8 @@ function TeacherMessages() {
         )}
 
         {/* Create Announcement */}
-        <Card sx={{ mb: 4, borderRadius: 3 }}>
-          <CardContent sx={{ p: 3 }}>
+        <Card sx={{ ...cardSx, mb: 4 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Typography variant="h6" fontWeight={700} mb={1}>
               Create Announcement
             </Typography>
@@ -182,6 +224,19 @@ function TeacherMessages() {
                 label="Select Class"
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
+                sx={fieldSx}
+                slotProps={{
+                  select: {
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          bgcolor: "background.paper",
+                          color: "text.primary",
+                        },
+                      },
+                    },
+                  },
+                }}
               >
                 {classes.map((schoolClass) => (
                   <MenuItem key={schoolClass._id} value={schoolClass._id}>
@@ -196,6 +251,19 @@ function TeacherMessages() {
                 label="Announcement Category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
+                sx={fieldSx}
+                slotProps={{
+                  select: {
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          bgcolor: "background.paper",
+                          color: "text.primary",
+                        },
+                      },
+                    },
+                  },
+                }}
               >
                 {categories.map((item) => (
                   <MenuItem key={item.value} value={item.value}>
@@ -209,6 +277,7 @@ function TeacherMessages() {
                 label="Subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                sx={fieldSx}
               />
 
               <TextField
@@ -218,8 +287,13 @@ function TeacherMessages() {
                 label="Write your announcement"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                inputProps={{ maxLength: 5000 }}
+                slotProps={{
+                  htmlInput: {
+                    maxLength: 5000,
+                  },
+                }}
                 helperText={`${content.length}/5000 characters`}
+                sx={fieldSx}
               />
 
               <Box display="flex" justifyContent="flex-end">
@@ -241,7 +315,7 @@ function TeacherMessages() {
         </Typography>
 
         {messages.length === 0 ? (
-          <Card sx={{ borderRadius: 3 }}>
+          <Card sx={cardSx}>
             <CardContent sx={{ py: 4, textAlign: "center" }}>
               <CampaignOutlinedIcon
                 color="disabled"
@@ -258,8 +332,8 @@ function TeacherMessages() {
         ) : (
           <Stack spacing={2}>
             {messages.map((message) => (
-              <Card key={message._id} sx={{ borderRadius: 3 }}>
-                <CardContent>
+              <Card key={message._id} sx={cardSx}>
+                <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
                   <Stack
                     direction="row"
                     justifyContent="space-between"
@@ -279,7 +353,13 @@ function TeacherMessages() {
                     Class: {message.schoolClass?.name || "Unknown class"}
                   </Typography>
 
-                  <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                  <Typography
+                    sx={{
+                      whiteSpace: "pre-wrap",
+                      color: "text.primary",
+                      lineHeight: 1.7,
+                    }}
+                  >
                     {message.content}
                   </Typography>
 
@@ -303,6 +383,13 @@ function TeacherMessages() {
           onClose={() => setPreviewOpen(false)}
           fullWidth
           maxWidth="sm"
+          PaperProps={{
+            sx: {
+              bgcolor: "background.paper",
+              color: "text.primary",
+              backgroundImage: "none",
+            },
+          }}
         >
           <DialogTitle>Preview Announcement</DialogTitle>
 
@@ -311,23 +398,32 @@ function TeacherMessages() {
               Class
             </Typography>
 
-            <Typography mb={2}>
+            <Typography color="text.secondary" mb={2}>
               {classes.find((item) => item._id === classId)?.name}
             </Typography>
 
             <Typography fontWeight={700}>Category</Typography>
 
-            <Typography mb={2}>
+            <Typography color="text.secondary" mb={2}>
               {categories.find((item) => item.value === category)?.label}
             </Typography>
 
             <Typography fontWeight={700}>Subject</Typography>
 
-            <Typography mb={2}>{subject}</Typography>
+            <Typography color="text.secondary" mb={2}>
+              {subject}
+            </Typography>
 
             <Typography fontWeight={700}>Announcement</Typography>
 
-            <Typography sx={{ whiteSpace: "pre-wrap", mt: 1 }}>
+            <Typography
+              sx={{
+                whiteSpace: "pre-wrap",
+                mt: 1,
+                color: "text.primary",
+                lineHeight: 1.7,
+              }}
+            >
               {content}
             </Typography>
           </DialogContent>

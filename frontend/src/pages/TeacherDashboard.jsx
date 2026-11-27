@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
@@ -26,6 +27,9 @@ import api from "../services/api";
 
 function TeacherDashboard() {
   const navigate = useNavigate();
+  const theme = useTheme();
+
+  const isDark = theme.palette.mode === "dark";
 
   const [stats, setStats] = useState({
     classes: 0,
@@ -94,7 +98,7 @@ function TeacherDashboard() {
           ? conversationData.conversations
           : [];
 
-        // Count unique students across all assigned classes.
+        // Count unique students across assigned classes.
         const studentIds = new Set();
 
         classList.forEach((schoolClass) => {
@@ -132,46 +136,47 @@ function TeacherDashboard() {
     loadDashboard();
   }, []);
 
+  // Theme-aware statistic card colors.
   const statCards = [
     {
       title: "My Classes",
       value: stats.classes,
       icon: SchoolOutlinedIcon,
-      color: "#1976D2",
-      background: "#EAF2FF",
-      border: "#C9DCFF",
+      color: isDark ? "#93C5FD" : "#1976D2",
+      background: isDark ? "#1E3553" : "#EAF2FF",
+      border: isDark ? "#304D70" : "#C9DCFF",
     },
     {
       title: "Students",
       value: stats.students,
       icon: GroupsOutlinedIcon,
-      color: "#00897B",
-      background: "#E3F5F2",
-      border: "#B8E5DC",
+      color: isDark ? "#6EE7D8" : "#00897B",
+      background: isDark ? "#193D3A" : "#E3F5F2",
+      border: isDark ? "#285B53" : "#B8E5DC",
     },
     {
       title: "Homework",
       value: stats.homework,
       icon: MenuBookOutlinedIcon,
-      color: "#ED8B00",
-      background: "#FFF3DF",
-      border: "#FFE0A8",
+      color: isDark ? "#FBBF65" : "#ED8B00",
+      background: isDark ? "#46351F" : "#FFF3DF",
+      border: isDark ? "#69502D" : "#FFE0A8",
     },
     {
       title: "Announcements",
       value: stats.announcements,
       icon: CampaignOutlinedIcon,
-      color: "#7B61A8",
-      background: "#F1EAFF",
-      border: "#DCCEFF",
+      color: isDark ? "#C4A7FF" : "#7B61A8",
+      background: isDark ? "#35294D" : "#F1EAFF",
+      border: isDark ? "#514071" : "#DCCEFF",
     },
     {
       title: "Direct Messages",
       value: stats.conversations,
       icon: ForumOutlinedIcon,
-      color: "#D45B70",
-      background: "#FCECEF",
-      border: "#F5C9D2",
+      color: isDark ? "#FDA4B4" : "#D45B70",
+      background: isDark ? "#472B36" : "#FCECEF",
+      border: isDark ? "#68404D" : "#F5C9D2",
     },
   ];
 
@@ -181,24 +186,24 @@ function TeacherDashboard() {
       description: "Create and manage student assignments.",
       icon: MenuBookOutlinedIcon,
       path: "/teacher/homework",
-      color: "#1976D2",
-      background: "#EAF2FF",
+      color: isDark ? "#93C5FD" : "#1976D2",
+      background: isDark ? "#1E3553" : "#EAF2FF",
     },
     {
       title: "Announcements",
       description: "Share important updates with your classes.",
       icon: CampaignOutlinedIcon,
       path: "/teacher/messages",
-      color: "#7B61A8",
-      background: "#F1EAFF",
+      color: isDark ? "#C4A7FF" : "#7B61A8",
+      background: isDark ? "#35294D" : "#F1EAFF",
     },
     {
       title: "Direct Messages",
       description: "Communicate privately with parents.",
       icon: ForumOutlinedIcon,
       path: "/teacher/conversations",
-      color: "#00897B",
-      background: "#E3F5F2",
+      color: isDark ? "#6EE7D8" : "#00897B",
+      background: isDark ? "#193D3A" : "#E3F5F2",
     },
   ];
 
@@ -206,10 +211,12 @@ function TeacherDashboard() {
     return (
       <DashboardLayout title="Teacher Overview">
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="50vh"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+          }}
         >
           <CircularProgress />
         </Box>
@@ -226,7 +233,7 @@ function TeacherDashboard() {
             variant="h4"
             fontWeight={800}
             letterSpacing="-0.7px"
-            color="#1E293B"
+            color="text.primary"
             mb={1}
           >
             Welcome back, {teacherName}!
@@ -267,7 +274,7 @@ function TeacherDashboard() {
                 elevation={0}
                 sx={{
                   position: "relative",
-                  background: item.background,
+                  bgcolor: item.background,
                   border: `1px solid ${item.border}`,
                   borderRadius: 3,
                   minHeight: 150,
@@ -276,7 +283,9 @@ function TeacherDashboard() {
 
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: "0 10px 25px rgba(25, 118, 210, 0.10)",
+                    boxShadow: isDark
+                      ? "0 10px 25px rgba(0,0,0,0.2)"
+                      : "0 10px 25px rgba(25,118,210,0.10)",
                   },
                 }}
               >
@@ -289,26 +298,24 @@ function TeacherDashboard() {
                     },
                   }}
                 >
-                  {/* Card Title */}
                   <Typography
-                    color="text.secondary"
+                    color={isDark ? "#CBD5E1" : "#64748B"}
                     fontWeight={600}
                     variant="body2"
                   >
                     {item.title}
                   </Typography>
 
-                  {/* Card Value */}
                   <Typography
                     variant="h3"
                     fontWeight={800}
-                    color="#263B53"
+                    color={isDark ? "#F1F5F9" : "#263B53"}
                     mt={2}
                   >
                     {item.value}
                   </Typography>
 
-                  {/* Icon - Fixed at top right */}
+                  {/* Statistic Icon */}
                   <Box
                     sx={{
                       position: "absolute",
@@ -317,12 +324,14 @@ function TeacherDashboard() {
                       width: 58,
                       height: 58,
                       borderRadius: 3,
-                      bgcolor: "#FFFFFF",
+                      bgcolor: isDark ? "#263447" : "#FFFFFF",
                       color: item.color,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(15, 23, 42, 0.07)",
+                      boxShadow: isDark
+                        ? "0 4px 12px rgba(0,0,0,0.18)"
+                        : "0 4px 12px rgba(15,23,42,0.07)",
                     }}
                   >
                     <Icon sx={{ fontSize: 29 }} />
@@ -348,8 +357,9 @@ function TeacherDashboard() {
           <Card
             elevation={0}
             sx={{
-              background: "#F5F9FF",
-              border: "1px solid #DCE9FA",
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
               borderRadius: 3,
             }}
           >
@@ -360,8 +370,8 @@ function TeacherDashboard() {
                     width: 42,
                     height: 42,
                     borderRadius: 2.5,
-                    bgcolor: "#E1EDFF",
-                    color: "#1976D2",
+                    bgcolor: isDark ? "#1E3553" : "#E1EDFF",
+                    color: isDark ? "#93C5FD" : "#1976D2",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -384,20 +394,22 @@ function TeacherDashboard() {
                   sx={{
                     textAlign: "center",
                     py: 5,
-                    bgcolor: "#FFFFFF",
-                    border: "1px dashed #CBDCF2",
+                    bgcolor: "action.hover",
+                    border: 1,
+                    borderStyle: "dashed",
+                    borderColor: "divider",
                     borderRadius: 2.5,
                   }}
                 >
                   <SchoolOutlinedIcon
                     sx={{
                       fontSize: 42,
-                      color: "#94A3B8",
+                      color: "text.secondary",
                       mb: 1,
                     }}
                   />
 
-                  <Typography fontWeight={600}>
+                  <Typography fontWeight={600} color="text.primary">
                     No classes assigned yet
                   </Typography>
 
@@ -412,15 +424,21 @@ function TeacherDashboard() {
                       key={schoolClass._id}
                       sx={{
                         p: 2.5,
-                        background: "#FFFFFF",
-                        border: "1px solid #DCE9FA",
-                        borderLeft: "4px solid #1976D2",
+                        bgcolor: isDark ? "#202D3D" : "#FFFFFF",
+                        border: 1,
+                        borderColor: "divider",
+                        borderLeft: `4px solid ${
+                          isDark ? "#60A5FA" : "#1976D2"
+                        }`,
                         borderRadius: 2.5,
                         transition: "all 0.2s ease",
+
                         "&:hover": {
-                          background: "#EDF4FF",
+                          bgcolor: isDark ? "#26374A" : "#EDF4FF",
                           transform: "translateY(-2px)",
-                          boxShadow: "0 5px 15px rgba(25, 118, 210, 0.07)",
+                          boxShadow: isDark
+                            ? "0 5px 15px rgba(0,0,0,0.18)"
+                            : "0 5px 15px rgba(25,118,210,0.07)",
                         },
                       }}
                     >
@@ -432,7 +450,7 @@ function TeacherDashboard() {
                         gap={2}
                       >
                         <Box>
-                          <Typography fontWeight={700} color="#263B53">
+                          <Typography fontWeight={700} color="text.primary">
                             {schoolClass.name}
                           </Typography>
 
@@ -448,8 +466,8 @@ function TeacherDashboard() {
 
                         <Box
                           sx={{
-                            bgcolor: "#EAF2FF",
-                            color: "#1976D2",
+                            bgcolor: isDark ? "#263D5B" : "#EAF2FF",
+                            color: isDark ? "#93C5FD" : "#1976D2",
                             px: 1.5,
                             py: 0.75,
                             borderRadius: 2,
@@ -471,8 +489,9 @@ function TeacherDashboard() {
           <Card
             elevation={0}
             sx={{
-              background: "#FAFCFF",
-              border: "1px solid #E0EAF5",
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
               borderRadius: 3,
             }}
           >
@@ -501,9 +520,11 @@ function TeacherDashboard() {
                         p: 1.5,
                         borderRadius: 2.5,
                         color: "text.primary",
-                        background: "#FFFFFF",
-                        border: "1px solid #E5EAF1",
+                        bgcolor: isDark ? "#202D3D" : "#FFFFFF",
+                        border: 1,
+                        borderColor: "divider",
                         transition: "all 0.2s ease",
+
                         "&:hover": {
                           bgcolor: action.background,
                           borderColor: action.color,
@@ -532,7 +553,7 @@ function TeacherDashboard() {
                         <Typography
                           fontWeight={700}
                           fontSize="0.9rem"
-                          color="#263B53"
+                          color="text.primary"
                         >
                           {action.title}
                         </Typography>

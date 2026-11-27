@@ -16,6 +16,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
@@ -28,6 +29,8 @@ import conversationService from "../services/conversationService";
 
 function TeacherNewConversation() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
@@ -43,6 +46,40 @@ function TeacherNewConversation() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+
+  // Theme-aware form styles
+  const fieldSx = {
+    "& .MuiInputLabel-root": {
+      color: "text.secondary",
+    },
+    "& .MuiInputBase-root": {
+      color: "text.primary",
+      bgcolor: "background.paper",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "divider",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "text.secondary",
+    },
+    "& .MuiSelect-icon": {
+      color: "text.secondary",
+    },
+    "& .MuiFormHelperText-root": {
+      color: "text.secondary",
+    },
+  };
+
+  const menuProps = {
+    PaperProps: {
+      sx: {
+        bgcolor: "background.paper",
+        color: "text.primary",
+        backgroundImage: "none",
+        border: `1px solid ${theme.palette.divider}`,
+      },
+    },
+  };
 
   // Load teacher's classes
   useEffect(() => {
@@ -134,7 +171,14 @@ function TeacherNewConversation() {
 
   return (
     <DashboardLayout title="Direct Messages">
-      <Box sx={{ maxWidth: 850, mx: "auto", pb: 4 }}>
+      <Box
+        sx={{
+          maxWidth: 850,
+          mx: "auto",
+          pb: 4,
+          color: "text.primary",
+        }}
+      >
         {/* Header */}
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
           <Box
@@ -142,8 +186,8 @@ function TeacherNewConversation() {
               width: 44,
               height: 44,
               borderRadius: 2,
-              bgcolor: "#EAF2FF",
-              color: "#1976D2",
+              bgcolor: isDark ? "rgba(96,165,250,0.16)" : "#EAF2FF",
+              color: isDark ? "#93C5FD" : "#1976D2",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -153,7 +197,13 @@ function TeacherNewConversation() {
           </Box>
 
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: "#1E293B" }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 800,
+                color: "text.primary",
+              }}
+            >
               New Conversation
             </Typography>
 
@@ -185,15 +235,18 @@ function TeacherNewConversation() {
           <Card
             elevation={0}
             sx={{
-              border: "1px solid #E1EAF5",
+              bgcolor: "background.paper",
+              color: "text.primary",
+              border: `1px solid ${theme.palette.divider}`,
               borderRadius: 3,
+              backgroundImage: "none",
             }}
           >
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box component="form" onSubmit={handleSubmit}>
                 <Stack spacing={2.5}>
                   {/* Class */}
-                  <FormControl fullWidth size="small" required>
+                  <FormControl fullWidth size="small" required sx={fieldSx}>
                     <InputLabel id="class-label">Select Class</InputLabel>
 
                     <Select
@@ -201,6 +254,7 @@ function TeacherNewConversation() {
                       value={selectedClass}
                       label="Select Class"
                       onChange={handleClassChange}
+                      MenuProps={menuProps}
                     >
                       {classes.map((schoolClass) => (
                         <MenuItem key={schoolClass._id} value={schoolClass._id}>
@@ -216,6 +270,7 @@ function TeacherNewConversation() {
                     size="small"
                     required
                     disabled={!selectedClass || students.length === 0}
+                    sx={fieldSx}
                   >
                     <InputLabel id="student-label">Select Student</InputLabel>
 
@@ -224,6 +279,7 @@ function TeacherNewConversation() {
                       value={studentId}
                       label="Select Student"
                       onChange={(event) => setStudentId(event.target.value)}
+                      MenuProps={menuProps}
                     >
                       {students.map((student) => (
                         <MenuItem key={student._id} value={student._id}>
@@ -240,7 +296,7 @@ function TeacherNewConversation() {
                   )}
 
                   {/* Category */}
-                  <FormControl fullWidth size="small" required>
+                  <FormControl fullWidth size="small" required sx={fieldSx}>
                     <InputLabel id="category-label">Category</InputLabel>
 
                     <Select
@@ -248,6 +304,7 @@ function TeacherNewConversation() {
                       value={category}
                       label="Category"
                       onChange={(event) => setCategory(event.target.value)}
+                      MenuProps={menuProps}
                     >
                       <MenuItem value="academic">Academic</MenuItem>
                       <MenuItem value="attendance">Attendance</MenuItem>
@@ -258,7 +315,12 @@ function TeacherNewConversation() {
                   </FormControl>
 
                   {/* Priority - independent of category */}
-                  <FormControl fullWidth size="small" required sx={{ mt: 1 }}>
+                  <FormControl
+                    fullWidth
+                    size="small"
+                    required
+                    sx={{ ...fieldSx, mt: 1 }}
+                  >
                     <InputLabel id="priority-label" shrink>
                       Priority
                     </InputLabel>
@@ -269,6 +331,7 @@ function TeacherNewConversation() {
                       value={priority}
                       label="Priority"
                       onChange={(event) => setPriority(event.target.value)}
+                      MenuProps={menuProps}
                     >
                       <MenuItem value="normal">Normal Priority</MenuItem>
 
@@ -289,8 +352,13 @@ function TeacherNewConversation() {
                     required
                     value={subject}
                     onChange={(event) => setSubject(event.target.value)}
-                    inputProps={{ maxLength: 150 }}
+                    slotProps={{
+                      htmlInput: {
+                        maxLength: 150,
+                      },
+                    }}
                     placeholder="e.g. Attendance Concern"
+                    sx={fieldSx}
                   />
 
                   {/* Message */}
@@ -302,8 +370,13 @@ function TeacherNewConversation() {
                     minRows={5}
                     value={content}
                     onChange={(event) => setContent(event.target.value)}
-                    inputProps={{ maxLength: 5000 }}
+                    slotProps={{
+                      htmlInput: {
+                        maxLength: 5000,
+                      },
+                    }}
                     placeholder="Write your message to the parent..."
+                    sx={fieldSx}
                   />
 
                   {/* Buttons */}

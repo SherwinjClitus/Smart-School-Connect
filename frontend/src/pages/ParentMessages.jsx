@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import api from "../services/api";
 import DashboardLayout from "../components/layout/DashboardLayout";
 
@@ -27,6 +28,10 @@ function ParentMessages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
   const loadMessages = async () => {
     try {
       setLoading(true);
@@ -38,25 +43,28 @@ function ParentMessages() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Failed to load messages. Please try again.",
+          "Failed to load announcements. Please try again.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadMessages();
-  }, []);
-
   const formatDate = (date) => {
+    if (!date) return "Date unavailable";
+
     return new Date(date).toLocaleString();
   };
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <Box display="flex" justifyContent="center" py={8}>
+      <DashboardLayout title="Announcements">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
           <CircularProgress />
         </Box>
       </DashboardLayout>
@@ -64,61 +72,80 @@ function ParentMessages() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Announcements">
       <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-        <Typography variant="h4" fontWeight={700} mb={1}>
-          Messages
+        {/* Page heading */}
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+          <CampaignOutlinedIcon color="primary" sx={{ fontSize: 32 }} />
+
+          <Typography variant="h4" fontWeight={700}>
+            Announcements
+          </Typography>
+        </Stack>
+
+        <Typography color="text.secondary" sx={{ mb: 3 }}>
+          Stay informed about important school and classroom updates.
         </Typography>
 
-        <Typography color="text.secondary" mb={3}>
-          Stay updated with announcements and messages from your child's
-          teachers.
-        </Typography>
-
+        {/* Error message */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
 
+        {/* Announcement count */}
         {!error && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            You have received {messages.length} message
+            You have received {messages.length} announcement
             {messages.length !== 1 ? "s" : ""}.
           </Alert>
         )}
 
+        {/* Empty state */}
         {messages.length === 0 && !error ? (
-          <Card sx={{ borderRadius: 3 }}>
+          <Card>
             <CardContent sx={{ textAlign: "center", py: 6 }}>
+              <CampaignOutlinedIcon
+                color="disabled"
+                sx={{ fontSize: 48, mb: 1 }}
+              />
+
               <Typography variant="h6" fontWeight={600} mb={1}>
-                No messages yet
+                No announcements yet
               </Typography>
 
               <Typography color="text.secondary">
-                Messages and announcements from your child's teachers will
-                appear here.
+                School and classroom announcements from your children's teachers
+                will appear here.
               </Typography>
             </CardContent>
           </Card>
         ) : (
+          /* Announcement list */
           <Stack spacing={2}>
             {messages.map((message) => (
               <Card
                 key={message._id}
                 sx={{
-                  borderRadius: 3,
-                  boxShadow: 2,
+                  borderRadius: 2,
+                  boxShadow: 1,
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                  {/* Subject and category */}
                   <Stack
-                    direction="row"
+                    direction={{
+                      xs: "column",
+                      sm: "row",
+                    }}
                     justifyContent="space-between"
-                    alignItems="flex-start"
-                    flexWrap="wrap"
-                    gap={1}
-                    mb={2}
+                    alignItems={{
+                      xs: "flex-start",
+                      sm: "center",
+                    }}
+                    spacing={1}
+                    sx={{ mb: 2 }}
                   >
                     <Typography variant="h6" fontWeight={700}>
                       {message.subject}
@@ -134,7 +161,8 @@ function ParentMessages() {
                     />
                   </Stack>
 
-                  <Stack spacing={0.5} mb={2}>
+                  {/* Announcement details */}
+                  <Stack spacing={0.5} sx={{ mb: 2 }}>
                     <Typography variant="body2" color="text.secondary">
                       <strong>Teacher:</strong>{" "}
                       {message.createdBy?.name || "Unknown"}
@@ -148,6 +176,7 @@ function ParentMessages() {
 
                   <Divider sx={{ mb: 2 }} />
 
+                  {/* Announcement content */}
                   <Typography
                     variant="body1"
                     sx={{
@@ -158,13 +187,14 @@ function ParentMessages() {
                     {message.content}
                   </Typography>
 
+                  {/* Date */}
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     display="block"
-                    mt={3}
+                    sx={{ mt: 3 }}
                   >
-                    Received: {formatDate(message.createdAt)}
+                    Published: {formatDate(message.createdAt)}
                   </Typography>
                 </CardContent>
               </Card>

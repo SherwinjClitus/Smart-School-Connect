@@ -8,12 +8,31 @@ function DashboardLayout({ children, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        color: "text.primary",
+        transition: "background-color 0.2s ease, color 0.2s ease",
+      }}
+    >
+      {/* Sidebar */}
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+      {/* Main Content */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          bgcolor: "background.default",
+          transition: "background-color 0.2s ease",
+        }}
+      >
+        {/* Topbar */}
         <Topbar title={title} onMenuClick={() => setMobileOpen(true)} />
 
+        {/* Page Content */}
         <Box
           component="main"
           sx={{
@@ -21,6 +40,10 @@ function DashboardLayout({ children, title }) {
             maxWidth: 1600,
             mx: "auto",
             width: "100%",
+            minHeight: "calc(100vh - 70px)",
+            bgcolor: "background.default",
+            color: "text.primary",
+            transition: "background-color 0.2s ease",
           }}
         >
           {children}

@@ -18,6 +18,7 @@ import TeacherInbox from "./features/conversations/pages/TeacherInbox";
 import ConversationDetails from "./features/conversations/pages/ConversationDetails";
 import NewConversation from "./features/conversations/pages/NewConversation";
 import TeacherNewConversation from "./features/conversations/pages/TeacherNewConversation";
+import StudentAnnouncements from "./pages/StudentAnnouncements";
 
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -34,6 +35,10 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/homework" element={<StudentHomework />} />
+        <Route
+          path="/student/announcements"
+          element={<StudentAnnouncements />}
+        />
       </Route>
 
       {/* Teacher routes */}

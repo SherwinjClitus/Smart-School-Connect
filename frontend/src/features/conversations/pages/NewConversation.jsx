@@ -14,8 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import SendIcon from "@mui/icons-material/Send";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
 
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import api from "../../../services/api";
@@ -32,19 +33,18 @@ const categories = [
 function NewConversation() {
   const navigate = useNavigate();
 
-  // Form state
   const [children, setChildren] = useState([]);
   const [studentId, setStudentId] = useState("");
+
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("academic");
   const [content, setContent] = useState("");
 
-  // Loading and error state
   const [loadingChildren, setLoadingChildren] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch children linked to the logged-in parent
+  // Load children linked to the logged-in parent
   useEffect(() => {
     const loadChildren = async () => {
       try {
@@ -57,25 +57,23 @@ function NewConversation() {
           ? response.data.children
           : [];
 
-        // Support both Mongoose id and _id properties
+        // Support both MongoDB _id and populated id fields
         const formattedChildren = linkedChildren
           .map((item) => {
-            const childId = item.child?.id || item.child?._id;
+            const child = item.child || {};
+            const id = child._id || child.id;
 
-            if (!childId) {
-              return null;
-            }
+            if (!id) return null;
 
             return {
-              studentId: String(childId),
-              studentName: item.child.name || "Unnamed Student",
+              studentId: String(id),
+              studentName: child.name || "Unnamed Student",
             };
           })
           .filter(Boolean);
 
         setChildren(formattedChildren);
 
-        // Automatically select the first linked child
         if (formattedChildren.length > 0) {
           setStudentId(formattedChildren[0].studentId);
         } else {
@@ -93,19 +91,13 @@ function NewConversation() {
     loadChildren();
   }, []);
 
-  // Handle child selection
-  const handleChildChange = (event) => {
-    setStudentId(event.target.value);
-    setError("");
-  };
+  const selectedChild = children.find((child) => child.studentId === studentId);
 
-  // Handle form submission
+  // Create the conversation
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setError("");
 
-    // Validate selected child
     if (!studentId) {
       setError("Please select a child.");
       return;
@@ -116,7 +108,6 @@ function NewConversation() {
       return;
     }
 
-    // Validate subject
     if (!subject.trim()) {
       setError("Please enter a subject.");
       return;
@@ -127,7 +118,6 @@ function NewConversation() {
       return;
     }
 
-    // Validate message
     if (!content.trim()) {
       setError("Please enter your message.");
       return;
@@ -141,26 +131,23 @@ function NewConversation() {
     try {
       setSubmitting(true);
 
-      const payload = {
+      const response = await conversationService.createConversation({
         studentId,
         subject: subject.trim(),
         category,
         content: content.trim(),
-      };
+      });
 
-      const response = await conversationService.createConversation(payload);
+      const conversation = response.conversation || response;
 
-      const conversationId =
-        response.conversation?._id ||
-        response.conversation?.id ||
-        response._id ||
-        response.id;
+      const conversationId = conversation._id || conversation.id;
 
       if (!conversationId) {
-        throw new Error("The server did not return a conversation ID.");
+        throw new Error(
+          "Conversation was created, but its ID was not returned.",
+        );
       }
 
-      // Navigate to the created conversation
       navigate(`/parent/conversations/${conversationId}`);
     } catch (err) {
       setError(
@@ -173,193 +160,220 @@ function NewConversation() {
     }
   };
 
-  // Find selected child
-  const selectedChild = children.find((child) => child.studentId === studentId);
-
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Direct Messages">
       <Box sx={{ maxWidth: 850, mx: "auto", pb: 4 }}>
         {/* Back Button */}
         <Button
-          startIcon={<ArrowBackIcon />}
+          startIcon={<ArrowBackRoundedIcon />}
           onClick={() => navigate("/parent/conversations")}
-          sx={{ mb: 2, textTransform: "none", alignSelf: "flex-start" }}
+          sx={{ mb: 2, textTransform: "none" }}
           disabled={submitting}
         >
           Back to Inbox
         </Button>
 
         {/* Page Heading */}
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            lineHeight: 1.2,
-            fontSize: { xs: "1.6rem", sm: "2rem" },
-          }}
-        >
-          New Conversation
-        </Typography>
-
-        <Typography sx={{ color: "text.secondary", mt: 0.5, mb: 3 }}>
-          Start a private conversation with your child's teacher.
-        </Typography>
-
-        {/* Conversation Form */}
-        <Card sx={{ borderRadius: 3 }}>
-          <CardContent
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1.5, mb: 3 }}>
+          <Box
             sx={{
-              p: { xs: 2, sm: 4 },
-              "&:last-child": { pb: { xs: 2, sm: 4 } },
+              width: 46,
+              height: 46,
+              flexShrink: 0,
+              borderRadius: 2,
+              bgcolor: "#EAF2FF",
+              color: "#1976D2",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {/* Loading State */}
+            <ForumOutlinedIcon />
+          </Box>
+
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 800,
+                color: "#1E293B",
+                lineHeight: 1.3,
+                fontSize: { xs: "1.25rem", sm: "1.5rem" },
+              }}
+            >
+              New Conversation
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", lineHeight: 1.5 }}
+            >
+              Start a private conversation with your child's teacher.
+            </Typography>
+          </Box>
+        </Stack>
+
+        {/* Error */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Form Card */}
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid #E1EAF5",
+            borderRadius: 3,
+          }}
+        >
+          <CardContent
+            sx={{
+              p: { xs: 2, sm: 3 },
+              "&:last-child": { pb: { xs: 2, sm: 3 } },
+            }}
+          >
             {loadingChildren ? (
               <Box
                 sx={{
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  py: 6,
+                  py: 7,
                 }}
               >
                 <CircularProgress />
               </Box>
+            ) : children.length === 0 ? (
+              <Alert severity="warning">
+                No linked children were found in your account. Please contact
+                the school administrator.
+              </Alert>
             ) : (
-              <>
-                {/* Error Message */}
-                {error && (
-                  <Alert severity="error" sx={{ mb: 3 }}>
-                    {error}
+              <Box component="form" onSubmit={handleSubmit}>
+                <Stack spacing={2.5}>
+                  {/* Child Selection */}
+                  <TextField
+                    select
+                    fullWidth
+                    required
+                    label="Select Child"
+                    value={studentId}
+                    onChange={(event) => {
+                      setStudentId(event.target.value);
+                      setError("");
+                    }}
+                    disabled={submitting}
+                  >
+                    {children.map((child) => (
+                      <MenuItem key={child.studentId} value={child.studentId}>
+                        {child.studentName}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  {selectedChild && (
+                    <Alert severity="info">
+                      This conversation will be about{" "}
+                      <strong>{selectedChild.studentName}</strong>. The assigned
+                      class teacher will be selected automatically.
+                    </Alert>
+                  )}
+
+                  {/* Subject */}
+                  <TextField
+                    fullWidth
+                    required
+                    label="Subject"
+                    placeholder="e.g. Regarding my child's absence"
+                    value={subject}
+                    onChange={(event) => setSubject(event.target.value)}
+                    inputProps={{ maxLength: 150 }}
+                    helperText={`${subject.length}/150 characters`}
+                    disabled={submitting}
+                  />
+
+                  {/* Category */}
+                  <TextField
+                    select
+                    fullWidth
+                    required
+                    label="Conversation Category"
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                    disabled={submitting}
+                  >
+                    {categories.map((item) => (
+                      <MenuItem key={item.value} value={item.value}>
+                        {item.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  {/* First Message */}
+                  <TextField
+                    fullWidth
+                    required
+                    multiline
+                    minRows={5}
+                    maxRows={10}
+                    label="Your Message"
+                    placeholder="Explain what you would like to discuss with the teacher..."
+                    value={content}
+                    onChange={(event) => setContent(event.target.value)}
+                    inputProps={{ maxLength: 5000 }}
+                    helperText={`${content.length}/5000 characters`}
+                    disabled={submitting}
+                  />
+
+                  {/* Information */}
+                  <Alert severity="info">
+                    You can reply to the conversation while it is open or in
+                    progress. Only the teacher can change its status.
                   </Alert>
-                )}
 
-                {/* No Children */}
-                {children.length === 0 ? (
-                  <Alert severity="warning">
-                    No linked children were found in your account. Please
-                    contact the school administrator.
-                  </Alert>
-                ) : (
-                  <Box component="form" onSubmit={handleSubmit}>
-                    <Stack spacing={3}>
-                      {/* Child Selection */}
-                      <TextField
-                        select
-                        fullWidth
-                        required
-                        label="Select Child"
-                        value={studentId}
-                        onChange={handleChildChange}
-                        disabled={submitting}
-                      >
-                        {children.map((child) => (
-                          <MenuItem
-                            key={child.studentId}
-                            value={child.studentId}
-                          >
-                            {child.studentName}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                  {/* Actions */}
+                  <Stack
+                    direction="row"
+                    sx={{
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 1.5,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate("/parent/conversations")}
+                      disabled={submitting}
+                      sx={{ textTransform: "none", minHeight: 40 }}
+                    >
+                      Cancel
+                    </Button>
 
-                      {/* Selected Child Information */}
-                      {selectedChild && (
-                        <Alert severity="success">
-                          Selected child: {selectedChild.studentName}
-                        </Alert>
-                      )}
-
-                      {/* Subject */}
-                      <TextField
-                        fullWidth
-                        required
-                        label="Subject"
-                        placeholder="e.g. Regarding my child's absence"
-                        value={subject}
-                        onChange={(event) => setSubject(event.target.value)}
-                        inputProps={{ maxLength: 150 }}
-                        helperText={`${subject.length}/150 characters`}
-                        disabled={submitting}
-                      />
-
-                      {/* Conversation Category */}
-                      <TextField
-                        select
-                        fullWidth
-                        required
-                        label="Conversation Category"
-                        value={category}
-                        onChange={(event) => setCategory(event.target.value)}
-                        disabled={submitting}
-                      >
-                        {categories.map((item) => (
-                          <MenuItem key={item.value} value={item.value}>
-                            {item.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-
-                      {/* First Message */}
-                      <TextField
-                        fullWidth
-                        required
-                        multiline
-                        minRows={5}
-                        maxRows={10}
-                        label="Your Message"
-                        placeholder="Explain what you would like to discuss with the teacher..."
-                        value={content}
-                        onChange={(event) => setContent(event.target.value)}
-                        inputProps={{ maxLength: 5000 }}
-                        helperText={`${content.length}/5000 characters`}
-                        disabled={submitting}
-                      />
-
-                      {/* Information */}
-                      <Alert severity="info">
-                        Your conversation will be sent to the teacher assigned
-                        to the selected child's class.
-                      </Alert>
-
-                      {/* Action Buttons */}
-                      <Stack
-                        direction="row"
-                        sx={{
-                          justifyContent: "flex-end",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                          gap: 2,
-                        }}
-                      >
-                        <Button
-                          variant="outlined"
-                          onClick={() => navigate("/parent/conversations")}
-                          disabled={submitting}
-                          sx={{ textTransform: "none", minHeight: 40 }}
-                        >
-                          Cancel
-                        </Button>
-
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          startIcon={<SendIcon />}
-                          disabled={
-                            submitting ||
-                            !studentId ||
-                            !subject.trim() ||
-                            !content.trim()
-                          }
-                          sx={{ textTransform: "none", minHeight: 40 }}
-                        >
-                          {submitting ? "Creating..." : "Create Conversation"}
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </Box>
-                )}
-              </>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      startIcon={<SendRoundedIcon />}
+                      disabled={
+                        submitting ||
+                        !studentId ||
+                        !subject.trim() ||
+                        !content.trim()
+                      }
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        minHeight: 40,
+                      }}
+                    >
+                      {submitting ? "Creating..." : "Create Conversation"}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
             )}
           </CardContent>
         </Card>

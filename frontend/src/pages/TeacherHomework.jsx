@@ -13,6 +13,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
@@ -27,6 +28,9 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import api from "../services/api";
 
 function TeacherHomework() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
   const [classes, setClasses] = useState([]);
   const [homework, setHomework] = useState([]);
 
@@ -94,6 +98,7 @@ function TeacherHomework() {
       setTitle("");
       setDescription("");
       setDueDate("");
+      setClassId("");
 
       setSuccess("Homework created and assigned successfully.");
 
@@ -114,11 +119,13 @@ function TeacherHomework() {
 
     homework.forEach((task) => {
       const deadline = new Date(task.dueDate);
+
       const completedCount = Array.isArray(task.completedBy)
         ? task.completedBy.length
         : 0;
 
       const schoolClass = task.schoolClass;
+
       const totalStudents = Array.isArray(schoolClass?.students)
         ? schoolClass.students.length
         : classes.find(
@@ -163,57 +170,49 @@ function TeacherHomework() {
         )?.students?.length || 0;
 
     if (totalStudents > 0 && completedCount >= totalStudents) {
-      return {
-        label: "Completed",
-        color: "success",
-      };
+      return { label: "Completed", color: "success" };
     }
 
     if (deadline < new Date()) {
-      return {
-        label: "Overdue",
-        color: "error",
-      };
+      return { label: "Overdue", color: "error" };
     }
 
-    return {
-      label: "Upcoming",
-      color: "info",
-    };
+    return { label: "Upcoming", color: "info" };
   };
 
+  // Theme-aware statistic cards
   const statCards = [
     {
       title: "Total Homework",
       value: homeworkStats.total,
       icon: AssignmentOutlinedIcon,
-      color: "#1976D2",
-      background: "#EAF2FF",
-      border: "#C9DCFF",
+      color: isDark ? "#93C5FD" : "#1976D2",
+      background: isDark ? "#1E3553" : "#EAF2FF",
+      border: isDark ? "#304D70" : "#C9DCFF",
     },
     {
       title: "Upcoming",
       value: homeworkStats.upcoming,
       icon: AccessTimeOutlinedIcon,
-      color: "#ED8B00",
-      background: "#FFF3DF",
-      border: "#FFE0A8",
+      color: isDark ? "#FBBF65" : "#ED8B00",
+      background: isDark ? "#46351F" : "#FFF3DF",
+      border: isDark ? "#69502D" : "#FFE0A8",
     },
     {
       title: "Overdue",
       value: homeworkStats.overdue,
       icon: EventBusyOutlinedIcon,
-      color: "#D32F2F",
-      background: "#FDECEC",
-      border: "#F5CACA",
+      color: isDark ? "#FCA5A5" : "#D32F2F",
+      background: isDark ? "#472B36" : "#FDECEC",
+      border: isDark ? "#68404D" : "#F5CACA",
     },
     {
       title: "Completed",
       value: homeworkStats.completed,
       icon: CheckCircleOutlineOutlinedIcon,
-      color: "#2E7D32",
-      background: "#E8F5E9",
-      border: "#C5E5C8",
+      color: isDark ? "#86EFAC" : "#2E7D32",
+      background: isDark ? "#1E3B2A" : "#E8F5E9",
+      border: isDark ? "#315B40" : "#C5E5C8",
     },
   ];
 
@@ -221,10 +220,12 @@ function TeacherHomework() {
     return (
       <DashboardLayout title="Homework Management">
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="50vh"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+          }}
         >
           <CircularProgress />
         </Box>
@@ -236,15 +237,15 @@ function TeacherHomework() {
     <DashboardLayout title="Homework Management">
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
         {/* Page Heading */}
-        <Box mb={4}>
+        <Box sx={{ mb: 4 }}>
           <Stack direction="row" alignItems="center" spacing={1.5} mb={1}>
             <Box
               sx={{
                 width: 46,
                 height: 46,
                 borderRadius: 2.5,
-                bgcolor: "#EAF2FF",
-                color: "#1976D2",
+                bgcolor: isDark ? "#1E3553" : "#EAF2FF",
+                color: isDark ? "#93C5FD" : "#1976D2",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -256,7 +257,7 @@ function TeacherHomework() {
             <Typography
               variant="h4"
               fontWeight={800}
-              color="#1E293B"
+              color="text.primary"
               letterSpacing="-0.6px"
             >
               Homework Management
@@ -304,13 +305,15 @@ function TeacherHomework() {
                 sx={{
                   position: "relative",
                   minHeight: 135,
-                  background: item.background,
+                  bgcolor: item.background,
                   border: `1px solid ${item.border}`,
                   borderRadius: 3,
                   transition: "0.2s ease",
                   "&:hover": {
                     transform: "translateY(-3px)",
-                    boxShadow: "0 8px 20px rgba(25,118,210,0.08)",
+                    boxShadow: isDark
+                      ? "0 8px 20px rgba(0,0,0,0.2)"
+                      : "0 8px 20px rgba(25,118,210,0.08)",
                   },
                 }}
               >
@@ -318,7 +321,9 @@ function TeacherHomework() {
                   <Typography
                     variant="body2"
                     fontWeight={600}
-                    color="text.secondary"
+                    sx={{
+                      color: isDark ? "#CBD5E1" : "#64748B",
+                    }}
                   >
                     {item.title}
                   </Typography>
@@ -326,7 +331,9 @@ function TeacherHomework() {
                   <Typography
                     variant="h3"
                     fontWeight={800}
-                    color="#263B53"
+                    sx={{
+                      color: isDark ? "#F1F5F9" : "#263B53",
+                    }}
                     mt={2}
                   >
                     {item.value}
@@ -339,13 +346,15 @@ function TeacherHomework() {
                       right: 20,
                       width: 50,
                       height: 50,
-                      bgcolor: "#FFFFFF",
+                      bgcolor: isDark ? "#263447" : "#FFFFFF",
                       color: item.color,
                       borderRadius: 2.5,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: "0 3px 10px rgba(15,23,42,0.06)",
+                      boxShadow: isDark
+                        ? "0 3px 10px rgba(0,0,0,0.18)"
+                        : "0 3px 10px rgba(15,23,42,0.06)",
                     }}
                   >
                     <Icon sx={{ fontSize: 27 }} />
@@ -361,9 +370,10 @@ function TeacherHomework() {
           elevation={0}
           sx={{
             mb: 4,
-            border: "1px solid #DCE9FA",
+            border: 1,
+            borderColor: "divider",
             borderRadius: 3,
-            background: "#F5F9FF",
+            bgcolor: "background.paper",
           }}
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
@@ -373,8 +383,8 @@ function TeacherHomework() {
                   width: 42,
                   height: 42,
                   borderRadius: 2.5,
-                  bgcolor: "#E1EDFF",
-                  color: "#1976D2",
+                  bgcolor: isDark ? "#1E3553" : "#E1EDFF",
+                  color: isDark ? "#93C5FD" : "#1976D2",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -432,7 +442,7 @@ function TeacherHomework() {
                     <Typography
                       variant="body2"
                       fontWeight={600}
-                      color="#334155"
+                      color="text.primary"
                       mb={1}
                     >
                       Select Class
@@ -445,9 +455,6 @@ function TeacherHomework() {
                       fullWidth
                       required
                       disabled={classes.length === 0}
-                      SelectProps={{
-                        displayEmpty: true,
-                      }}
                       slotProps={{
                         select: {
                           displayEmpty: true,
@@ -482,7 +489,7 @@ function TeacherHomework() {
                     <Typography
                       variant="body2"
                       fontWeight={600}
-                      color="#334155"
+                      color="text.primary"
                       mb={1}
                     >
                       Due Date & Time
@@ -494,8 +501,10 @@ function TeacherHomework() {
                       onChange={(e) => setDueDate(e.target.value)}
                       fullWidth
                       required
-                      inputProps={{
-                        min: new Date().toISOString().slice(0, 16),
+                      slotProps={{
+                        htmlInput: {
+                          min: new Date().toISOString().slice(0, 16),
+                        },
                       }}
                     />
                   </Box>
@@ -507,7 +516,12 @@ function TeacherHomework() {
                   </Alert>
                 )}
 
-                <Box display="flex" justifyContent="flex-end">
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <Button
                     type="submit"
                     variant="contained"
@@ -532,7 +546,7 @@ function TeacherHomework() {
 
         {/* Assigned Homework */}
         <Box mb={2}>
-          <Typography variant="h5" fontWeight={800} color="#1E293B">
+          <Typography variant="h5" fontWeight={800} color="text.primary">
             Assigned Homework
           </Typography>
 
@@ -545,14 +559,20 @@ function TeacherHomework() {
           <Card
             elevation={0}
             sx={{
-              border: "1px dashed #C9DCFF",
+              border: 1,
+              borderStyle: "dashed",
+              borderColor: "divider",
               borderRadius: 3,
-              background: "#F5F9FF",
+              bgcolor: "background.paper",
             }}
           >
             <CardContent sx={{ py: 6, textAlign: "center" }}>
               <AssignmentOutlinedIcon
-                sx={{ fontSize: 48, color: "#94A3B8", mb: 1 }}
+                sx={{
+                  fontSize: 48,
+                  color: "text.secondary",
+                  mb: 1,
+                }}
               />
 
               <Typography fontWeight={700} variant="h6">
@@ -568,6 +588,7 @@ function TeacherHomework() {
           <Stack spacing={2}>
             {homework.map((task) => {
               const status = getTaskStatus(task);
+
               const completedCount = Array.isArray(task.completedBy)
                 ? task.completedBy.length
                 : 0;
@@ -590,13 +611,16 @@ function TeacherHomework() {
                   key={task._id}
                   elevation={0}
                   sx={{
-                    border: "1px solid #E1EAF5",
+                    border: 1,
+                    borderColor: "divider",
                     borderRadius: 3,
-                    background: "#FFFFFF",
+                    bgcolor: "background.paper",
                     transition: "0.2s ease",
                     "&:hover": {
-                      borderColor: "#B8D2F5",
-                      boxShadow: "0 6px 18px rgba(25,118,210,0.06)",
+                      borderColor: "primary.main",
+                      boxShadow: isDark
+                        ? "0 6px 18px rgba(0,0,0,0.2)"
+                        : "0 6px 18px rgba(25,118,210,0.06)",
                     },
                   }}
                 >
@@ -612,7 +636,7 @@ function TeacherHomework() {
                         <Typography
                           variant="h6"
                           fontWeight={700}
-                          color="#263B53"
+                          color="text.primary"
                         >
                           {task.title}
                         </Typography>
@@ -624,7 +648,10 @@ function TeacherHomework() {
                           mt={1}
                         >
                           <SchoolOutlinedIcon
-                            sx={{ fontSize: 18, color: "#1976D2" }}
+                            sx={{
+                              fontSize: 18,
+                              color: "primary.main",
+                            }}
                           />
 
                           <Typography variant="body2" color="text.secondary">
@@ -663,7 +690,10 @@ function TeacherHomework() {
                     >
                       <Stack direction="row" alignItems="center" spacing={1}>
                         <AccessTimeOutlinedIcon
-                          sx={{ color: "#64748B", fontSize: 19 }}
+                          sx={{
+                            color: "text.secondary",
+                            fontSize: 19,
+                          }}
                         />
 
                         <Typography variant="body2" color="text.secondary">
@@ -675,7 +705,7 @@ function TeacherHomework() {
                         <Typography
                           variant="body2"
                           fontWeight={700}
-                          color="#1976D2"
+                          color="primary.main"
                         >
                           {completedCount} / {totalStudents} students completed
                         </Typography>

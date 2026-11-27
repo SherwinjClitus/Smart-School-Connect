@@ -8,6 +8,7 @@ import {
   Typography,
   Divider,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
@@ -54,6 +55,11 @@ const roleLinks = {
       path: "/student/homework",
       icon: MenuBookOutlinedIcon,
     },
+    {
+      label: "Announcements",
+      path: "/student/announcements",
+      icon: CampaignOutlinedIcon,
+    },
   ],
 
   parent: [
@@ -83,7 +89,9 @@ const roleLinks = {
 function Sidebar({ mobileOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
 
+  const isDark = theme.palette.mode === "dark";
   const isDesktop = useMediaQuery("(min-width:900px)");
 
   let user = null;
@@ -113,7 +121,9 @@ function Sidebar({ mobileOpen, onClose }) {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#FFFFFF",
+        bgcolor: "background.paper",
+        color: "text.primary",
+        transition: "background-color 0.2s ease",
       }}
     >
       {/* Brand */}
@@ -139,7 +149,11 @@ function Sidebar({ mobileOpen, onClose }) {
         <Typography
           variant="overline"
           color="text.secondary"
-          sx={{ px: 1, fontWeight: 700, letterSpacing: 1 }}
+          sx={{
+            px: 1,
+            fontWeight: 700,
+            letterSpacing: 1,
+          }}
         >
           MAIN MENU
         </Typography>
@@ -162,10 +176,12 @@ function Sidebar({ mobileOpen, onClose }) {
                   mb: 0.75,
                   minHeight: 48,
                   transition: "all 0.2s ease",
+                  color: "text.primary",
 
                   "& .MuiListItemIcon-root": {
                     minWidth: 40,
-                    color: active ? "#1976D2" : "#64748B",
+                    color: active ? "primary.main" : "text.secondary",
+                    transition: "color 0.2s ease",
                   },
 
                   "& .MuiListItemText-primary": {
@@ -174,16 +190,21 @@ function Sidebar({ mobileOpen, onClose }) {
                   },
 
                   "&.Mui-selected": {
-                    bgcolor: "#EAF2FF",
-                    color: "#1976D2",
+                    bgcolor: isDark ? "rgba(96, 165, 250, 0.15)" : "#EAF2FF",
+
+                    color: "primary.main",
+
+                    "& .MuiListItemIcon-root": {
+                      color: "primary.main",
+                    },
 
                     "&:hover": {
-                      bgcolor: "#DFEAFC",
+                      bgcolor: isDark ? "rgba(96, 165, 250, 0.22)" : "#DFEAFC",
                     },
                   },
 
                   "&:hover": {
-                    bgcolor: "#F5F8FC",
+                    bgcolor: isDark ? "rgba(255,255,255,0.06)" : "#F5F8FC",
                   },
                 }}
               >
@@ -206,7 +227,7 @@ function Sidebar({ mobileOpen, onClose }) {
           SIGNED IN AS
         </Typography>
 
-        <Typography fontWeight={700} mt={0.5}>
+        <Typography fontWeight={700} color="text.primary" mt={0.5}>
           {user?.name || "User"}
         </Typography>
 
@@ -240,7 +261,12 @@ function Sidebar({ mobileOpen, onClose }) {
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            borderRight: "1px solid #E5EAF1",
+            bgcolor: "background.paper",
+            color: "text.primary",
+            borderRight: 1,
+            borderColor: "divider",
+            backgroundImage: "none",
+            transition: "background-color 0.2s ease",
           },
         }}
       >

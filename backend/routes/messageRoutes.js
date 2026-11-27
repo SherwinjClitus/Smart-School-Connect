@@ -8,6 +8,7 @@ const {
   sendClassMessage,
   getTeacherMessages,
   getParentMessages,
+  getStudentMessages,
 } = require("../controllers/messageController");
 
 // All message routes require authentication
@@ -15,10 +16,12 @@ router.use(authMiddleware);
 
 // Teacher endpoints
 router.post("/", authorizeRoles("teacher"), sendClassMessage);
-
 router.get("/teacher", authorizeRoles("teacher"), getTeacherMessages);
 
 // Parent endpoint
 router.get("/parent", authorizeRoles("parent"), getParentMessages);
+
+// Student endpoint
+router.get("/student", authorizeRoles("student"), getStudentMessages);
 
 module.exports = router;

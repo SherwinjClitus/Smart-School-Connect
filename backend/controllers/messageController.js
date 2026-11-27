@@ -33,6 +33,12 @@ const sendClassMessage = async (req, res) => {
       });
     }
 
+    if (subject && subject.trim().length > 150) {
+      return res.status(400).json({
+        message: "Subject cannot exceed 150 characters",
+      });
+    }
+
     const selectedCategory = category || "general_update";
 
     if (!allowedCategories.includes(selectedCategory)) {
@@ -41,6 +47,7 @@ const sendClassMessage = async (req, res) => {
       });
     }
 
+    // Verify that this class belongs to the logged-in teacher
     const schoolClass = await SchoolClass.findOne({
       _id: classId,
       teacher: req.user.id,
@@ -58,41 +65,46 @@ const sendClassMessage = async (req, res) => {
       });
     }
 
+    // Find parents linked to students in this class
     const parents = await User.find({
       role: "parent",
       children: { $in: schoolClass.students },
     }).select("_id");
 
-    if (!parents.length) {
-      return res.status(400).json({
-        message: "No linked parents found for this class",
-      });
-    }
+    // Include both students and their linked parents as recipients
+    const recipientIds = [
+      ...schoolClass.students,
+      ...parents.map((parent) => parent._id),
+    ];
 
-    const recipientIds = parents.map((parent) => parent._id);
+    // Remove duplicate recipient IDs
+    const uniqueRecipientIds = [
+      ...new Map(recipientIds.map((id) => [id.toString(), id])).values(),
+    ];
 
     const newMessage = await Message.create({
-      subject: subject?.trim() || "Parent Update",
+      subject: subject?.trim() || "School Announcement",
       category: selectedCategory,
       content: content.trim(),
       schoolClass: schoolClass._id,
       createdBy: req.user.id,
-      recipients: recipientIds,
+      recipients: uniqueRecipientIds,
     });
 
     return res.status(201).json({
-      message: "Message sent successfully",
-      recipientCount: recipientIds.length,
+      message: "Announcement sent successfully",
+      recipientCount: uniqueRecipientIds.length,
       sentMessage: newMessage,
     });
   } catch (error) {
     console.error("Send message error:", error);
 
     return res.status(500).json({
-      message: "Failed to send message",
+      message: "Failed to send announcement",
     });
   }
 };
+
 const getTeacherMessages = async (req, res) => {
   try {
     const messages = await Message.find({
@@ -102,14 +114,15 @@ const getTeacherMessages = async (req, res) => {
       .populate("recipients", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       count: messages.length,
       messages,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Fetch teacher messages error:", error);
+
+    return res.status(500).json({
       message: "Failed to fetch teacher messages",
-      error: error.message,
     });
   }
 };
@@ -123,14 +136,60 @@ const getParentMessages = async (req, res) => {
       .populate("schoolClass", "name grade section")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       count: messages.length,
       messages,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Fetch parent messages error:", error);
+
+    return res.status(500).json({
       message: "Failed to fetch parent messages",
-      error: error.message,
+    });
+  }
+};
+
+// Student announcements
+const getStudentMessages = async (req, res) => {
+  try {
+    // Get the logged-in student's assigned class
+    const student = await User.findOne({
+      _id: req.user.id,
+      role: "student",
+    }).select("classId");
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student account not found",
+      });
+    }
+
+    if (!student.classId) {
+      return res.status(200).json({
+        count: 0,
+        messages: [],
+      });
+    }
+
+    // Fetch announcements for the student's class.
+    // This includes older announcements created before students
+    // were added to the recipients list.
+    const messages = await Message.find({
+      schoolClass: student.classId,
+    })
+      .populate("createdBy", "name email")
+      .populate("schoolClass", "name grade section")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      count: messages.length,
+      messages,
+    });
+  } catch (error) {
+    console.error("Fetch student announcements error:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch student announcements",
     });
   }
 };
@@ -139,4 +198,5 @@ module.exports = {
   sendClassMessage,
   getTeacherMessages,
   getParentMessages,
+  getStudentMessages,
 };
