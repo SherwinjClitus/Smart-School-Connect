@@ -30,6 +30,15 @@ const categories = [
   { value: "administrative", label: "Administrative" },
 ];
 
+const formCardSx = {
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 3,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+  boxShadow: "none",
+};
+
 function NewConversation() {
   const navigate = useNavigate();
 
@@ -57,7 +66,6 @@ function NewConversation() {
           ? response.data.children
           : [];
 
-        // Support both MongoDB _id and populated id fields
         const formattedChildren = linkedChildren
           .map((item) => {
             const child = item.child || {};
@@ -167,22 +175,32 @@ function NewConversation() {
         <Button
           startIcon={<ArrowBackRoundedIcon />}
           onClick={() => navigate("/parent/conversations")}
-          sx={{ mb: 2, textTransform: "none" }}
+          sx={{
+            mb: 2,
+            textTransform: "none",
+          }}
           disabled={submitting}
         >
           Back to Inbox
         </Button>
 
         {/* Page Heading */}
-        <Stack direction="row" sx={{ alignItems: "center", gap: 1.5, mb: 3 }}>
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "center",
+            gap: 1.5,
+            mb: 3,
+          }}
+        >
           <Box
             sx={{
               width: 46,
               height: 46,
               flexShrink: 0,
               borderRadius: 2,
-              bgcolor: "#EAF2FF",
-              color: "#1976D2",
+              bgcolor: "action.selected",
+              color: "primary.main",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -196,7 +214,7 @@ function NewConversation() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -206,7 +224,10 @@ function NewConversation() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                lineHeight: 1.5,
+              }}
             >
               Start a private conversation with your child's teacher.
             </Typography>
@@ -221,17 +242,13 @@ function NewConversation() {
         )}
 
         {/* Form Card */}
-        <Card
-          elevation={0}
-          sx={{
-            border: "1px solid #E1EAF5",
-            borderRadius: 3,
-          }}
-        >
+        <Card elevation={0} sx={formCardSx}>
           <CardContent
             sx={{
               p: { xs: 2, sm: 3 },
-              "&:last-child": { pb: { xs: 2, sm: 3 } },
+              "&:last-child": {
+                pb: { xs: 2, sm: 3 },
+              },
             }}
           >
             {loadingChildren ? (
@@ -289,7 +306,12 @@ function NewConversation() {
                     placeholder="e.g. Regarding my child's absence"
                     value={subject}
                     onChange={(event) => setSubject(event.target.value)}
-                    inputProps={{ maxLength: 150 }}
+                    slotProps={{
+                      htmlInput: { maxLength: 150 },
+                      formHelperText: {
+                        sx: { textAlign: "right" },
+                      },
+                    }}
                     helperText={`${subject.length}/150 characters`}
                     disabled={submitting}
                   />
@@ -322,7 +344,12 @@ function NewConversation() {
                     placeholder="Explain what you would like to discuss with the teacher..."
                     value={content}
                     onChange={(event) => setContent(event.target.value)}
-                    inputProps={{ maxLength: 5000 }}
+                    slotProps={{
+                      htmlInput: { maxLength: 5000 },
+                      formHelperText: {
+                        sx: { textAlign: "right" },
+                      },
+                    }}
                     helperText={`${content.length}/5000 characters`}
                     disabled={submitting}
                   />
@@ -347,7 +374,10 @@ function NewConversation() {
                       variant="outlined"
                       onClick={() => navigate("/parent/conversations")}
                       disabled={submitting}
-                      sx={{ textTransform: "none", minHeight: 40 }}
+                      sx={{
+                        textTransform: "none",
+                        minHeight: 40,
+                      }}
                     >
                       Cancel
                     </Button>

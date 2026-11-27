@@ -42,7 +42,6 @@ function getDayStart(value = new Date()) {
 
 function getTaskState(task) {
   if (task.status === "completed") return "completed";
-
   if (!task.dueDate) return "pending";
 
   const dueDate = getDayStart(task.dueDate);
@@ -69,11 +68,13 @@ function formatDate(value) {
   });
 }
 
-// Shared styles
 const sectionCardSx = {
-  border: "1px solid #E1EAF5",
+  border: 1,
+  borderColor: "divider",
   borderRadius: 2.5,
   mb: 3,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
 };
 
 const sectionContentSx = {
@@ -90,7 +91,7 @@ const sectionHeaderSx = {
 
 const sectionTitleSx = {
   fontWeight: 800,
-  color: "#1E293B",
+  color: "text.primary",
   lineHeight: 1.4,
 };
 
@@ -221,32 +222,32 @@ function ParentDashboard() {
       value: stats.overdue,
       helper: "Needs attention",
       icon: WarningAmberRoundedIcon,
-      color: "#C62828",
-      background: "#FFF0F0",
+      color: "error.main",
+      background: "error.light",
     },
     {
       label: "Due Today",
       value: stats.today,
       helper: "Complete today",
       icon: TodayOutlinedIcon,
-      color: "#B76E00",
-      background: "#FFF5E5",
+      color: "warning.dark",
+      background: "warning.light",
     },
     {
       label: "Upcoming",
       value: stats.upcoming,
       helper: "Future assignments",
       icon: AssignmentOutlinedIcon,
-      color: "#1976D2",
-      background: "#EAF2FF",
+      color: "primary.main",
+      background: "action.selected",
     },
     {
       label: "Completed",
       value: stats.completed,
       helper: "Finished assignments",
       icon: CheckCircleOutlineRoundedIcon,
-      color: "#2E7D32",
-      background: "#EAF6EC",
+      color: "success.main",
+      background: "success.light",
     },
   ];
 
@@ -285,7 +286,7 @@ function ParentDashboard() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -295,7 +296,11 @@ function ParentDashboard() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                lineHeight: 1.5,
+              }}
             >
               Here's what needs your attention at school.
             </Typography>
@@ -333,16 +338,17 @@ function ParentDashboard() {
         )}
 
         {children.length === 0 ? (
-          <Card
-            elevation={0}
-            sx={{ border: "1px solid #E1EAF5", borderRadius: 3 }}
-          >
+          <Card elevation={0} sx={sectionCardSx}>
             <CardContent sx={{ p: 5, textAlign: "center" }}>
               <SchoolOutlinedIcon
-                sx={{ fontSize: 42, color: "#94A3B8", mb: 1.5 }}
+                sx={{
+                  fontSize: 42,
+                  color: "text.secondary",
+                  mb: 1.5,
+                }}
               />
 
-              <Typography sx={{ fontWeight: 700 }}>
+              <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                 No linked children found
               </Typography>
 
@@ -357,7 +363,7 @@ function ParentDashboard() {
           </Card>
         ) : (
           <>
-            {/* Summary */}
+            {/* Summary cards */}
             <Box
               sx={{
                 display: "grid",
@@ -377,12 +383,18 @@ function ParentDashboard() {
                     key={item.label}
                     elevation={0}
                     sx={{
-                      border: "1px solid #E1EAF5",
+                      border: 1,
+                      borderColor: "divider",
                       borderRadius: 2.5,
+                      bgcolor: "background.paper",
+                      backgroundImage: "none",
                     }}
                   >
                     <CardContent
-                      sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}
+                      sx={{
+                        p: 2.5,
+                        "&:last-child": { pb: 2.5 },
+                      }}
                     >
                       <Stack
                         direction="row"
@@ -395,7 +407,10 @@ function ParentDashboard() {
                         <Box sx={{ minWidth: 0 }}>
                           <Typography
                             variant="body2"
-                            sx={{ color: "text.secondary", fontWeight: 600 }}
+                            sx={{
+                              color: "text.secondary",
+                              fontWeight: 600,
+                            }}
                           >
                             {item.label}
                           </Typography>
@@ -404,10 +419,13 @@ function ParentDashboard() {
                             variant="h4"
                             sx={{
                               fontWeight: 800,
-                              color: "#1E293B",
+                              color: "text.primary",
                               mt: 0.75,
                               lineHeight: 1.2,
-                              fontSize: { xs: "1.75rem", sm: "2rem" },
+                              fontSize: {
+                                xs: "1.75rem",
+                                sm: "2rem",
+                              },
                             }}
                           >
                             {item.value}
@@ -490,7 +508,10 @@ function ParentDashboard() {
                         direction={{ xs: "column", sm: "row" }}
                         sx={{
                           justifyContent: "space-between",
-                          alignItems: { xs: "flex-start", sm: "center" },
+                          alignItems: {
+                            xs: "flex-start",
+                            sm: "center",
+                          },
                           gap: 1.5,
                           py: 2,
                         }}
@@ -500,6 +521,7 @@ function ParentDashboard() {
                             sx={{
                               fontWeight: 700,
                               lineHeight: 1.4,
+                              color: "text.primary",
                               overflowWrap: "anywhere",
                             }}
                           >
@@ -508,7 +530,10 @@ function ParentDashboard() {
 
                           <Typography
                             variant="body2"
-                            sx={{ color: "text.secondary", mt: 0.5 }}
+                            sx={{
+                              color: "text.secondary",
+                              mt: 0.5,
+                            }}
                           >
                             {task.studentName} · Due {formatDate(task.dueDate)}
                           </Typography>
@@ -587,20 +612,26 @@ function ParentDashboard() {
                         direction={{ xs: "column", sm: "row" }}
                         sx={{
                           justifyContent: "space-between",
-                          alignItems: { xs: "flex-start", sm: "center" },
+                          alignItems: {
+                            xs: "flex-start",
+                            sm: "center",
+                          },
                           gap: 2,
                           py: 2.5,
                         }}
                       >
                         <Stack
                           direction="row"
-                          sx={{ alignItems: "center", gap: 1.5 }}
+                          sx={{
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
                         >
                           <Avatar
                             sx={{
                               flexShrink: 0,
-                              bgcolor: "#EAF2FF",
-                              color: "#1976D2",
+                              bgcolor: "action.selected",
+                              color: "primary.main",
                               fontWeight: 700,
                             }}
                           >
@@ -609,7 +640,11 @@ function ParentDashboard() {
 
                           <Box sx={{ minWidth: 0 }}>
                             <Typography
-                              sx={{ fontWeight: 700, lineHeight: 1.4 }}
+                              sx={{
+                                fontWeight: 700,
+                                lineHeight: 1.4,
+                                color: "text.primary",
+                              }}
                             >
                               {item.child?.name || "Unknown"}
                             </Typography>
@@ -651,11 +686,17 @@ function ParentDashboard() {
 
                           <Button
                             size="small"
-                            onClick={() => {
-                              setSelectedChild(getChildId(item));
-                              navigate("/parent/homework");
+                            onClick={() =>
+                              navigate("/parent/homework", {
+                                state: {
+                                  selectedChild: getChildId(item),
+                                },
+                              })
+                            }
+                            sx={{
+                              textTransform: "none",
+                              minHeight: 32,
                             }}
-                            sx={{ textTransform: "none", minHeight: 32 }}
                           >
                             View
                           </Button>
@@ -697,10 +738,7 @@ function ParentDashboard() {
                 </Stack>
 
                 {recentTasks.length === 0 ? (
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary" }}
-                  >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     No assignments available.
                   </Typography>
                 ) : (
@@ -721,6 +759,7 @@ function ParentDashboard() {
                             sx={{
                               fontWeight: 600,
                               lineHeight: 1.4,
+                              color: "text.primary",
                               overflowWrap: "anywhere",
                             }}
                           >
@@ -769,14 +808,7 @@ function ParentDashboard() {
             </Card>
 
             {/* Latest announcement */}
-            <Card
-              elevation={0}
-              sx={{
-                border: "1px solid #DCE8FA",
-                borderRadius: 2.5,
-                background: "#F8FBFF",
-              }}
-            >
+            <Card elevation={0} sx={sectionCardSx}>
               <CardContent sx={sectionContentSx}>
                 <Stack
                   direction="row"
@@ -787,8 +819,8 @@ function ParentDashboard() {
                     variant="rounded"
                     sx={{
                       flexShrink: 0,
-                      bgcolor: "#EAF2FF",
-                      color: "#1976D2",
+                      bgcolor: "action.selected",
+                      color: "primary.main",
                     }}
                   >
                     <CampaignOutlinedIcon />
@@ -802,7 +834,12 @@ function ParentDashboard() {
                     {latestAnnouncement ? (
                       <>
                         <Typography
-                          sx={{ fontWeight: 700, mt: 1.5, lineHeight: 1.4 }}
+                          sx={{
+                            fontWeight: 700,
+                            mt: 1.5,
+                            lineHeight: 1.4,
+                            color: "text.primary",
+                          }}
                         >
                           {latestAnnouncement.subject}
                         </Typography>
@@ -838,7 +875,10 @@ function ParentDashboard() {
                     ) : (
                       <Typography
                         variant="body2"
-                        sx={{ color: "text.secondary", mt: 1 }}
+                        sx={{
+                          color: "text.secondary",
+                          mt: 1,
+                        }}
                       >
                         No school announcements available.
                       </Typography>

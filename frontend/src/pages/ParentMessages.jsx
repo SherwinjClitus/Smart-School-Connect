@@ -23,6 +23,15 @@ const categoryLabels = {
   general_update: "General Update",
 };
 
+const announcementCardSx = {
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 2.5,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+  boxShadow: "none",
+};
+
 function ParentMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,17 +62,25 @@ function ParentMessages() {
   const formatDate = (date) => {
     if (!date) return "Date unavailable";
 
-    return new Date(date).toLocaleString();
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Date unavailable";
+    }
+
+    return parsedDate.toLocaleString();
   };
 
   if (loading) {
     return (
       <DashboardLayout title="Announcements">
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="50vh"
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+          }}
         >
           <CircularProgress />
         </Box>
@@ -73,17 +90,31 @@ function ParentMessages() {
 
   return (
     <DashboardLayout title="Announcements">
-      <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+      <Box sx={{ maxWidth: 1000, mx: "auto", pb: 4 }}>
         {/* Page heading */}
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
           <CampaignOutlinedIcon color="primary" sx={{ fontSize: 32 }} />
 
-          <Typography variant="h4" fontWeight={700}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              color: "text.primary",
+              fontSize: { xs: "1.5rem", sm: "2rem" },
+            }}
+          >
             Announcements
           </Typography>
         </Stack>
 
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 3,
+            lineHeight: 1.6,
+          }}
+        >
           Stay informed about important school and classroom updates.
         </Typography>
 
@@ -104,18 +135,42 @@ function ParentMessages() {
 
         {/* Empty state */}
         {messages.length === 0 && !error ? (
-          <Card>
-            <CardContent sx={{ textAlign: "center", py: 6 }}>
+          <Card elevation={0} sx={announcementCardSx}>
+            <CardContent
+              sx={{
+                textAlign: "center",
+                py: 6,
+                px: 3,
+              }}
+            >
               <CampaignOutlinedIcon
-                color="disabled"
-                sx={{ fontSize: 48, mb: 1 }}
+                sx={{
+                  fontSize: 48,
+                  mb: 1.5,
+                  color: "text.disabled",
+                }}
               />
 
-              <Typography variant="h6" fontWeight={600} mb={1}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  color: "text.primary",
+                  mb: 1,
+                }}
+              >
                 No announcements yet
               </Typography>
 
-              <Typography color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  lineHeight: 1.6,
+                  maxWidth: 450,
+                  mx: "auto",
+                }}
+              >
                 School and classroom announcements from your children's teachers
                 will appear here.
               </Typography>
@@ -125,14 +180,15 @@ function ParentMessages() {
           /* Announcement list */
           <Stack spacing={2}>
             {messages.map((message) => (
-              <Card
-                key={message._id}
-                sx={{
-                  borderRadius: 2,
-                  boxShadow: 1,
-                }}
-              >
-                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Card key={message._id} elevation={0} sx={announcementCardSx}>
+                <CardContent
+                  sx={{
+                    p: { xs: 2, sm: 3 },
+                    "&:last-child": {
+                      pb: { xs: 2, sm: 3 },
+                    },
+                  }}
+                >
                   {/* Subject and category */}
                   <Stack
                     direction={{
@@ -144,10 +200,18 @@ function ParentMessages() {
                       xs: "flex-start",
                       sm: "center",
                     }}
-                    spacing={1}
+                    spacing={1.5}
                     sx={{ mb: 2 }}
                   >
-                    <Typography variant="h6" fontWeight={700}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        color: "text.primary",
+                        lineHeight: 1.4,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
                       {message.subject}
                     </Typography>
 
@@ -158,18 +222,44 @@ function ParentMessages() {
                       size="small"
                       color="primary"
                       variant="outlined"
+                      sx={{
+                        fontWeight: 600,
+                        flexShrink: 0,
+                      }}
                     />
                   </Stack>
 
                   {/* Announcement details */}
-                  <Stack spacing={0.5} sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Teacher:</strong>{" "}
+                  <Stack spacing={0.75} sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          fontWeight: 700,
+                          color: "text.primary",
+                        }}
+                      >
+                        Teacher:
+                      </Box>{" "}
                       {message.createdBy?.name || "Unknown"}
                     </Typography>
 
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Class:</strong>{" "}
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          fontWeight: 700,
+                          color: "text.primary",
+                        }}
+                      >
+                        Class:
+                      </Box>{" "}
                       {message.schoolClass?.name || "Unknown class"}
                     </Typography>
                   </Stack>
@@ -180,19 +270,23 @@ function ParentMessages() {
                   <Typography
                     variant="body1"
                     sx={{
+                      color: "text.primary",
                       whiteSpace: "pre-wrap",
-                      lineHeight: 1.7,
+                      lineHeight: 1.8,
+                      overflowWrap: "anywhere",
                     }}
                   >
                     {message.content}
                   </Typography>
 
-                  {/* Date */}
+                  {/* Publication date */}
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    display="block"
-                    sx={{ mt: 3 }}
+                    sx={{
+                      display: "block",
+                      color: "text.secondary",
+                      mt: 3,
+                    }}
                   >
                     Published: {formatDate(message.createdAt)}
                   </Typography>

@@ -42,7 +42,6 @@ function getDayStart(value = new Date()) {
 
 function getTaskState(task) {
   if (task.status === "completed") return "completed";
-
   if (!task.dueDate) return "pending";
 
   const dueDate = getDayStart(task.dueDate);
@@ -96,6 +95,37 @@ const statusConfig = {
   },
 };
 
+const metricCards = [
+  {
+    label: "Total",
+    key: "total",
+    color: "text.primary",
+  },
+  {
+    label: "Pending",
+    key: "pending",
+    color: "warning.main",
+  },
+  {
+    label: "Overdue",
+    key: "overdue",
+    color: "error.main",
+  },
+  {
+    label: "Completed",
+    key: "completed",
+    color: "success.main",
+  },
+];
+
+const sectionCardSx = {
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 2.5,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+};
+
 function ParentHomework() {
   const location = useLocation();
 
@@ -119,7 +149,6 @@ function ParentHomework() {
       const receivedChildren = response.data.children || [];
       setChildren(receivedChildren);
 
-      // Clear an invalid selected child if the linked list has changed.
       if (
         selectedChild !== "all" &&
         !receivedChildren.some((item) => getChildId(item) === selectedChild)
@@ -239,7 +268,7 @@ function ParentHomework() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -249,7 +278,11 @@ function ParentHomework() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                lineHeight: 1.5,
+              }}
             >
               Monitor assignments, deadlines, and your children's progress.
             </Typography>
@@ -289,16 +322,17 @@ function ParentHomework() {
             <CircularProgress />
           </Box>
         ) : children.length === 0 ? (
-          <Card
-            elevation={0}
-            sx={{ border: "1px solid #E1EAF5", borderRadius: 3 }}
-          >
+          <Card elevation={0} sx={sectionCardSx}>
             <CardContent sx={{ p: 5, textAlign: "center" }}>
               <SchoolOutlinedIcon
-                sx={{ fontSize: 42, color: "#94A3B8", mb: 1.5 }}
+                sx={{
+                  fontSize: 42,
+                  color: "text.secondary",
+                  mb: 1.5,
+                }}
               />
 
-              <Typography sx={{ fontWeight: 700 }}>
+              <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                 No linked children found
               </Typography>
 
@@ -325,40 +359,20 @@ function ParentHomework() {
                 mb: 4,
               }}
             >
-              {[
-                {
-                  label: "Total",
-                  value: stats.total,
-                  color: "#334155",
-                },
-                {
-                  label: "Pending",
-                  value: stats.pending,
-                  color: "#B76E00",
-                },
-                {
-                  label: "Overdue",
-                  value: stats.overdue,
-                  color: "#D32F2F",
-                },
-                {
-                  label: "Completed",
-                  value: stats.completed,
-                  color: "#2E7D32",
-                },
-              ].map((item) => (
-                <Card
-                  key={item.label}
-                  elevation={0}
-                  sx={{
-                    border: "1px solid #E1EAF5",
-                    borderRadius: 2.5,
-                  }}
-                >
-                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+              {metricCards.map((item) => (
+                <Card key={item.label} elevation={0} sx={sectionCardSx}>
+                  <CardContent
+                    sx={{
+                      p: 2.5,
+                      "&:last-child": { pb: 2.5 },
+                    }}
+                  >
                     <Typography
                       variant="body2"
-                      sx={{ color: "text.secondary", fontWeight: 600 }}
+                      sx={{
+                        color: "text.secondary",
+                        fontWeight: 600,
+                      }}
                     >
                       {item.label}
                     </Typography>
@@ -370,10 +384,13 @@ function ParentHomework() {
                         color: item.color,
                         mt: 0.75,
                         lineHeight: 1.2,
-                        fontSize: { xs: "1.75rem", sm: "2rem" },
+                        fontSize: {
+                          xs: "1.75rem",
+                          sm: "2rem",
+                        },
                       }}
                     >
-                      {item.value}
+                      {stats[item.key]}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -381,19 +398,14 @@ function ParentHomework() {
             </Box>
 
             {/* Child selection and search */}
-            <Card
-              elevation={0}
-              sx={{
-                border: "1px solid #E1EAF5",
-                borderRadius: 2.5,
-                mb: 2.5,
-              }}
-            >
-              <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  sx={{ gap: 2 }}
-                >
+            <Card elevation={0} sx={{ ...sectionCardSx, mb: 2.5 }}>
+              <CardContent
+                sx={{
+                  p: 2.5,
+                  "&:last-child": { pb: 2.5 },
+                }}
+              >
+                <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2 }}>
                   <FormControl
                     size="small"
                     sx={{ minWidth: { xs: "100%", sm: 230 } }}
@@ -425,12 +437,14 @@ function ParentHomework() {
                     placeholder="Search assignments..."
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchRoundedIcon color="action" />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchRoundedIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Stack>
@@ -454,7 +468,7 @@ function ParentHomework() {
               </Stack>
             </Box>
 
-            {/* Assignment list */}
+            {/* Assignment list heading */}
             <Stack
               direction="row"
               sx={{
@@ -466,7 +480,11 @@ function ParentHomework() {
             >
               <Box>
                 <Typography
-                  sx={{ fontWeight: 800, color: "#1E293B", lineHeight: 1.4 }}
+                  sx={{
+                    fontWeight: 800,
+                    color: "text.primary",
+                    lineHeight: 1.4,
+                  }}
                 >
                   {selectedChildName}
                 </Typography>
@@ -480,22 +498,30 @@ function ParentHomework() {
               </Box>
             </Stack>
 
+            {/* Assignment list */}
             {visibleHomework.length === 0 ? (
               <Card
                 elevation={0}
                 sx={{
-                  border: "1px dashed #CBD5E1",
+                  border: 1,
+                  borderStyle: "dashed",
+                  borderColor: "divider",
                   borderRadius: 2.5,
                   textAlign: "center",
                   py: 6,
                   px: 2,
+                  bgcolor: "background.paper",
                 }}
               >
                 <AssignmentOutlinedIcon
-                  sx={{ fontSize: 40, color: "#94A3B8", mb: 1 }}
+                  sx={{
+                    fontSize: 40,
+                    color: "text.secondary",
+                    mb: 1,
+                  }}
                 />
 
-                <Typography sx={{ fontWeight: 700 }}>
+                <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                   No assignments found
                 </Typography>
 
@@ -528,29 +554,39 @@ function ParentHomework() {
                       key={task._id}
                       elevation={0}
                       sx={{
-                        border: "1px solid #E1EAF5",
-                        borderRadius: 2.5,
+                        ...sectionCardSx,
                         transition: "0.2s",
                         "&:hover": {
-                          borderColor: "#A8C5E8",
+                          borderColor: "primary.main",
                         },
                       }}
                     >
                       <CardContent
                         sx={{
                           p: { xs: 2.5, sm: 3 },
-                          "&:last-child": { pb: { xs: 2.5, sm: 3 } },
+                          "&:last-child": {
+                            pb: { xs: 2.5, sm: 3 },
+                          },
                         }}
                       >
                         <Stack
                           direction={{ xs: "column", sm: "row" }}
                           sx={{
                             justifyContent: "space-between",
-                            alignItems: { xs: "flex-start", sm: "flex-start" },
+                            alignItems: {
+                              xs: "flex-start",
+                              sm: "flex-start",
+                            },
                             gap: 2.5,
                           }}
                         >
-                          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              minWidth: 0,
+                              width: "100%",
+                            }}
+                          >
                             <Stack
                               direction="row"
                               sx={{
@@ -564,7 +600,7 @@ function ParentHomework() {
                                 variant="subtitle1"
                                 sx={{
                                   fontWeight: 800,
-                                  color: "#1E293B",
+                                  color: "text.primary",
                                   lineHeight: 1.4,
                                   overflowWrap: "anywhere",
                                 }}
@@ -611,8 +647,8 @@ function ParentHomework() {
                                   sx={{
                                     width: 23,
                                     height: 23,
-                                    bgcolor: "#EAF2FF",
-                                    color: "#1976D2",
+                                    bgcolor: "action.selected",
+                                    color: "primary.main",
                                   }}
                                 >
                                   <SchoolOutlinedIcon sx={{ fontSize: 15 }} />
@@ -647,7 +683,10 @@ function ParentHomework() {
                               minWidth: { sm: 170 },
                               maxWidth: { sm: 220 },
                               flexShrink: 0,
-                              textAlign: { xs: "left", sm: "right" },
+                              textAlign: {
+                                xs: "left",
+                                sm: "right",
+                              },
                             }}
                           >
                             <Stack
@@ -705,7 +744,10 @@ function ParentHomework() {
 
                             <Typography
                               variant="caption"
-                              sx={{ color: "success.main", fontWeight: 600 }}
+                              sx={{
+                                color: "success.main",
+                                fontWeight: 600,
+                              }}
                             >
                               Updated: {formatDate(task.updatedAt)}
                             </Typography>

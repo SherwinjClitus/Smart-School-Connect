@@ -36,40 +36,52 @@ import conversationService from "../services/conversationService";
 const statusConfig = {
   open: {
     label: "Open",
-    background: "#FFF4E5",
-    color: "#B76E00",
-    border: "#FFE0A8",
+    color: "warning",
   },
   in_progress: {
     label: "In Progress",
-    background: "#EAF2FF",
-    color: "#1976D2",
-    border: "#C9DCFF",
+    color: "info",
   },
   resolved: {
     label: "Resolved",
-    background: "#E8F5E9",
-    color: "#2E7D32",
-    border: "#C5E5C8",
+    color: "success",
   },
   archived: {
     label: "Archived",
-    background: "#F1F5F9",
-    color: "#64748B",
-    border: "#DCE3EA",
+    color: "default",
   },
 };
 
 const categoryConfig = {
-  attendance: { label: "Attendance", color: "#1976D2", background: "#EAF2FF" },
-  urgent: { label: "Urgent", color: "#D32F2F", background: "#FDECEC" },
-  academic: { label: "Academic", color: "#7B61A8", background: "#F1EAFF" },
-  homework: { label: "Homework", color: "#ED8B00", background: "#FFF3DF" },
+  attendance: {
+    label: "Attendance",
+    color: "info",
+  },
+  urgent: {
+    label: "Urgent",
+    color: "error",
+  },
+  academic: {
+    label: "Academic",
+    color: "secondary",
+  },
+  homework: {
+    label: "Homework",
+    color: "warning",
+  },
   administrative: {
     label: "Administrative",
-    color: "#00897B",
-    background: "#E3F5F2",
+    color: "success",
   },
+};
+
+const sectionCardSx = {
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 2.5,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+  boxShadow: "none",
 };
 
 function formatDate(date) {
@@ -77,7 +89,9 @@ function formatDate(date) {
 
   const parsedDate = new Date(date);
 
-  if (Number.isNaN(parsedDate.getTime())) return "Not available";
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Not available";
+  }
 
   return parsedDate.toLocaleString([], {
     dateStyle: "medium",
@@ -174,33 +188,25 @@ function ParentInbox() {
       label: "Total Conversations",
       value: stats.total,
       icon: AssignmentOutlinedIcon,
-      color: "#1976D2",
-      background: "#EAF2FF",
-      border: "#C9DCFF",
+      color: "primary.main",
     },
     {
       label: "Open",
       value: stats.open,
       icon: ForumOutlinedIcon,
-      color: "#ED8B00",
-      background: "#FFF3DF",
-      border: "#FFE0A8",
+      color: "warning.main",
     },
     {
       label: "In Progress",
       value: stats.inProgress,
       icon: PendingActionsOutlinedIcon,
-      color: "#0284C7",
-      background: "#EAF4FF",
-      border: "#C9DCFF",
+      color: "info.main",
     },
     {
       label: "Resolved",
       value: stats.resolved,
       icon: CheckCircleOutlineOutlinedIcon,
-      color: "#2E7D32",
-      background: "#E8F5E9",
-      border: "#C5E5C8",
+      color: "success.main",
     },
   ];
 
@@ -222,7 +228,7 @@ function ParentInbox() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 mb: 0.5,
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
@@ -294,16 +300,13 @@ function ParentInbox() {
             const Icon = item.icon;
 
             return (
-              <Card
-                key={item.label}
-                elevation={0}
-                sx={{
-                  borderRadius: 2.5,
-                  border: `1px solid ${item.border}`,
-                  background: "#FFFFFF",
-                }}
-              >
-                <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Card key={item.label} elevation={0} sx={sectionCardSx}>
+                <CardContent
+                  sx={{
+                    p: 2,
+                    "&:last-child": { pb: 2 },
+                  }}
+                >
                   <Stack
                     direction="row"
                     sx={{
@@ -328,7 +331,7 @@ function ParentInbox() {
                         variant="h4"
                         sx={{
                           fontWeight: 800,
-                          color: "#1E293B",
+                          color: "text.primary",
                           lineHeight: 1.2,
                           fontSize: { xs: "1.75rem", sm: "2rem" },
                         }}
@@ -342,7 +345,7 @@ function ParentInbox() {
                         width: 42,
                         height: 42,
                         borderRadius: 2,
-                        background: item.background,
+                        bgcolor: "action.selected",
                         color: item.color,
                         display: "flex",
                         alignItems: "center",
@@ -360,14 +363,7 @@ function ParentInbox() {
         </Box>
 
         {/* Inbox and Archived Tabs */}
-        <Card
-          elevation={0}
-          sx={{
-            border: "1px solid #E1EAF5",
-            borderRadius: 2.5,
-            mb: 2,
-          }}
-        >
+        <Card elevation={0} sx={{ ...sectionCardSx, mb: 2 }}>
           <Tabs
             value={view}
             onChange={(event, newValue) => {
@@ -376,6 +372,8 @@ function ParentInbox() {
             }}
             sx={{
               px: 2,
+              borderBottom: 1,
+              borderColor: "divider",
               "& .MuiTab-root": {
                 textTransform: "none",
                 fontWeight: 700,
@@ -392,13 +390,17 @@ function ParentInbox() {
         <Card
           elevation={0}
           sx={{
-            borderRadius: 2.5,
-            border: "1px solid #E1EAF5",
-            background: "#F8FBFF",
+            ...sectionCardSx,
+            bgcolor: "background.paper",
             mb: 3,
           }}
         >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+          <CardContent
+            sx={{
+              p: 2,
+              "&:last-child": { pb: 2 },
+            }}
+          >
             <Stack
               direction="row"
               sx={{
@@ -408,7 +410,13 @@ function ParentInbox() {
                 mb: 1.5,
               }}
             >
-              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  color: "text.primary",
+                }}
+              >
                 Find Conversations
               </Typography>
 
@@ -437,15 +445,13 @@ function ParentInbox() {
                 InputProps={{
                   startAdornment: (
                     <SearchRoundedIcon
-                      sx={{ mr: 1, color: "text.secondary", fontSize: 21 }}
+                      sx={{
+                        mr: 1,
+                        color: "text.secondary",
+                        fontSize: 21,
+                      }}
                     />
                   ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#FFFFFF",
-                    borderRadius: 2,
-                  },
                 }}
               />
 
@@ -459,7 +465,6 @@ function ParentInbox() {
                   value={statusFilter}
                   label="Status"
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  sx={{ bgcolor: "#FFFFFF", borderRadius: 2 }}
                 >
                   <MenuItem value="all">All Conversations</MenuItem>
 
@@ -480,7 +485,7 @@ function ParentInbox() {
           </CardContent>
         </Card>
 
-        {/* Conversation List */}
+        {/* Conversation List Heading */}
         <Stack
           direction="row"
           sx={{
@@ -492,7 +497,11 @@ function ParentInbox() {
         >
           <Typography
             variant="h6"
-            sx={{ fontWeight: 800, color: "#1E293B", lineHeight: 1.3 }}
+            sx={{
+              fontWeight: 800,
+              color: "text.primary",
+              lineHeight: 1.3,
+            }}
           >
             {view === "inbox" ? "Your Inbox" : "Archived Conversations"}
           </Typography>
@@ -500,32 +509,51 @@ function ParentInbox() {
           <Chip
             label={`${filteredConversations.length} found`}
             size="small"
-            sx={{
-              bgcolor: "#EAF2FF",
-              color: "#1976D2",
-              fontWeight: 700,
-            }}
+            color="primary"
+            variant="outlined"
+            sx={{ fontWeight: 700 }}
           />
         </Stack>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 8,
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : filteredConversations.length === 0 ? (
           <Card
             elevation={0}
             sx={{
-              border: "1px dashed #CBD5E1",
+              border: 1,
+              borderStyle: "dashed",
+              borderColor: "divider",
               borderRadius: 2.5,
+              bgcolor: "background.paper",
               textAlign: "center",
               py: 6,
               px: 2,
             }}
           >
-            <ForumOutlinedIcon sx={{ fontSize: 42, color: "#94A3B8", mb: 1 }} />
+            <ForumOutlinedIcon
+              sx={{
+                fontSize: 42,
+                color: "text.disabled",
+                mb: 1,
+              }}
+            />
 
-            <Typography sx={{ fontWeight: 700, color: "#334155", mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                mb: 0.5,
+              }}
+            >
               {search || statusFilter !== "all"
                 ? "No matching conversations"
                 : view === "inbox"
@@ -544,7 +572,11 @@ function ParentInbox() {
                 variant="contained"
                 startIcon={<AddRoundedIcon />}
                 onClick={() => navigate("/parent/conversations/new")}
-                sx={{ textTransform: "none", borderRadius: 2, minHeight: 40 }}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  minHeight: 40,
+                }}
               >
                 Create Conversation
               </Button>
@@ -557,8 +589,7 @@ function ParentInbox() {
 
               const category = categoryConfig[item.category] || {
                 label: item.category || "General",
-                color: "#475569",
-                background: "#F1F5F9",
+                color: "default",
               };
 
               const teacherName = item.teacher?.name || "Assigned Teacher";
@@ -570,21 +601,28 @@ function ParentInbox() {
                   key={item._id || item.id}
                   elevation={0}
                   sx={{
-                    border: "1px solid #E1EAF5",
-                    borderRadius: 2.5,
-                    transition: "0.2s",
+                    ...sectionCardSx,
+                    transition: "border-color 0.2s, box-shadow 0.2s",
                     "&:hover": {
-                      borderColor: "#90B8E8",
-                      boxShadow: "0 4px 16px rgba(15, 23, 42, 0.06)",
+                      borderColor: "primary.main",
+                      boxShadow: 2,
                     },
                   }}
                 >
-                  <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+                  <CardContent
+                    sx={{
+                      p: 2.5,
+                      "&:last-child": { pb: 2.5 },
+                    }}
+                  >
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       sx={{
                         justifyContent: "space-between",
-                        alignItems: { xs: "flex-start", sm: "center" },
+                        alignItems: {
+                          xs: "flex-start",
+                          sm: "center",
+                        },
                         gap: 2,
                       }}
                     >
@@ -602,7 +640,7 @@ function ParentInbox() {
                             variant="subtitle1"
                             sx={{
                               fontWeight: 800,
-                              color: "#1E293B",
+                              color: "text.primary",
                               lineHeight: 1.4,
                               overflowWrap: "anywhere",
                             }}
@@ -613,26 +651,27 @@ function ParentInbox() {
                           <Chip
                             size="small"
                             label={status.label}
-                            sx={{
-                              bgcolor: status.background,
-                              color: status.color,
-                              border: `1px solid ${status.border}`,
-                              fontWeight: 700,
-                            }}
+                            color={status.color}
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
                           />
                         </Stack>
 
                         <Stack
                           direction="row"
-                          sx={{ alignItems: "center", gap: 1.25, mb: 1.5 }}
+                          sx={{
+                            alignItems: "center",
+                            gap: 1.25,
+                            mb: 1.5,
+                          }}
                         >
                           <Avatar
                             sx={{
                               width: 32,
                               height: 32,
                               flexShrink: 0,
-                              bgcolor: "#EAF2FF",
-                              color: "#1976D2",
+                              bgcolor: "action.selected",
+                              color: "primary.main",
                               fontSize: 14,
                               fontWeight: 700,
                             }}
@@ -645,7 +684,7 @@ function ParentInbox() {
                               variant="body2"
                               sx={{
                                 fontWeight: 700,
-                                color: "#334155",
+                                color: "text.primary",
                                 lineHeight: 1.4,
                               }}
                             >
@@ -667,7 +706,11 @@ function ParentInbox() {
 
                         <Stack
                           direction="row"
-                          sx={{ flexWrap: "wrap", gap: 1, mb: 1.5 }}
+                          sx={{
+                            flexWrap: "wrap",
+                            gap: 1,
+                            mb: 1.5,
+                          }}
                         >
                           <Chip
                             size="small"
@@ -686,11 +729,9 @@ function ParentInbox() {
                           <Chip
                             size="small"
                             label={category.label}
-                            sx={{
-                              bgcolor: category.background,
-                              color: category.color,
-                              fontWeight: 700,
-                            }}
+                            color={category.color}
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
                           />
 
                           <Chip
@@ -710,7 +751,10 @@ function ParentInbox() {
 
                         <Typography
                           variant="caption"
-                          sx={{ display: "block", color: "text.secondary" }}
+                          sx={{
+                            display: "block",
+                            color: "text.secondary",
+                          }}
                         >
                           Last activity: {formatDate(item.lastMessageAt)}
                         </Typography>
@@ -725,7 +769,10 @@ function ParentInbox() {
                           )
                         }
                         sx={{
-                          alignSelf: { xs: "flex-start", sm: "center" },
+                          alignSelf: {
+                            xs: "flex-start",
+                            sm: "center",
+                          },
                           flexShrink: 0,
                           borderRadius: 2,
                           textTransform: "none",
