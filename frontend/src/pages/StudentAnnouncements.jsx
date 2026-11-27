@@ -84,7 +84,13 @@ function StudentAnnouncements() {
   const formatDate = (date) => {
     if (!date) return "Date unavailable";
 
-    return new Date(date).toLocaleString("en-IN", {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Date unavailable";
+    }
+
+    return parsedDate.toLocaleString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -98,7 +104,7 @@ function StudentAnnouncements() {
       <Box sx={{ maxWidth: 1000, mx: "auto", pb: 5 }}>
         {/* Heading */}
         <Stack
-          direction={{ xs: "row", sm: "row" }}
+          direction="row"
           sx={{
             justifyContent: "space-between",
             alignItems: "center",
@@ -111,7 +117,7 @@ function StudentAnnouncements() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -121,7 +127,11 @@ function StudentAnnouncements() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                lineHeight: 1.5,
+              }}
             >
               Important updates and information from your school.
             </Typography>
@@ -131,7 +141,13 @@ function StudentAnnouncements() {
             onClick={fetchAnnouncements}
             disabled={loading}
             aria-label="Refresh announcements"
-            sx={{ flexShrink: 0, width: 40, height: 40 }}
+            sx={{
+              flexShrink: 0,
+              width: 40,
+              height: 40,
+              border: 1,
+              borderColor: "divider",
+            }}
           >
             <RefreshRoundedIcon />
           </IconButton>
@@ -145,12 +161,14 @@ function StudentAnnouncements() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{ mb: 3.5 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon color="action" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRoundedIcon color="action" />
+                </InputAdornment>
+              ),
+            },
           }}
         />
 
@@ -161,11 +179,25 @@ function StudentAnnouncements() {
         )}
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 8,
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : filteredAnnouncements.length === 0 ? (
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              backgroundImage: "none",
+              borderColor: "divider",
+            }}
+          >
             <CardContent
               sx={{
                 textAlign: "center",
@@ -175,16 +207,28 @@ function StudentAnnouncements() {
               }}
             >
               <CampaignOutlinedIcon
-                sx={{ fontSize: 42, color: "text.secondary", mb: 1.5 }}
+                sx={{
+                  fontSize: 42,
+                  color: "text.secondary",
+                  mb: 1.5,
+                }}
               />
 
-              <Typography sx={{ fontWeight: 700 }}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  color: "text.primary",
+                }}
+              >
                 No announcements found
               </Typography>
 
               <Typography
                 variant="body2"
-                sx={{ color: "text.secondary", mt: 0.75 }}
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.75,
+                }}
               >
                 {search
                   ? "Try a different search term."
@@ -195,7 +239,20 @@ function StudentAnnouncements() {
         ) : (
           <Stack spacing={2.5}>
             {filteredAnnouncements.map((item) => (
-              <Card key={item._id} variant="outlined" sx={{ borderRadius: 3 }}>
+              <Card
+                key={item._id}
+                variant="outlined"
+                sx={{
+                  borderRadius: 3,
+                  bgcolor: "background.paper",
+                  backgroundImage: "none",
+                  borderColor: "divider",
+                  transition: "border-color 0.2s",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                  },
+                }}
+              >
                 <CardContent
                   sx={{
                     p: { xs: 2.5, sm: 3 },
@@ -209,8 +266,8 @@ function StudentAnnouncements() {
                   >
                     <Avatar
                       sx={{
-                        bgcolor: "#EAF2FF",
-                        color: "#1976D2",
+                        bgcolor: "action.selected",
+                        color: "primary.main",
                         width: 42,
                         height: 42,
                         flexShrink: 0,
@@ -234,6 +291,7 @@ function StudentAnnouncements() {
                             fontWeight: 750,
                             fontSize: "1.1rem",
                             lineHeight: 1.4,
+                            color: "text.primary",
                             overflowWrap: "anywhere",
                           }}
                         >
@@ -281,6 +339,7 @@ function StudentAnnouncements() {
                           sx={{ alignItems: "center" }}
                         >
                           <SchoolOutlinedIcon fontSize="small" color="action" />
+
                           <Typography
                             variant="caption"
                             sx={{ color: "text.secondary" }}
@@ -305,6 +364,7 @@ function StudentAnnouncements() {
                             fontSize="small"
                             color="action"
                           />
+
                           <Typography
                             variant="caption"
                             sx={{ color: "text.secondary" }}

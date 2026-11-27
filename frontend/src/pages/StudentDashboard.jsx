@@ -60,9 +60,13 @@ function formatDate(value) {
 
 // Shared styles
 const sectionCardSx = {
-  border: "1px solid #E1EAF5",
+  border: 1,
+  borderColor: "divider",
   borderRadius: 2.5,
   mb: 3,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+  boxShadow: "none",
 };
 
 const sectionContentSx = {
@@ -79,7 +83,7 @@ const sectionHeaderSx = {
 
 const sectionTitleSx = {
   fontWeight: 800,
-  color: "#1E293B",
+  color: "text.primary",
   lineHeight: 1.4,
 };
 
@@ -182,32 +186,28 @@ function StudentDashboard() {
       value: stats.overdue,
       helper: "Needs attention",
       icon: WarningAmberRoundedIcon,
-      color: "#C62828",
-      background: "#FFF0F0",
+      color: "error.main",
     },
     {
       label: "Due Today",
       value: stats.today,
       helper: "Complete today",
       icon: TodayOutlinedIcon,
-      color: "#B76E00",
-      background: "#FFF5E5",
+      color: "warning.main",
     },
     {
       label: "Upcoming",
       value: stats.upcoming,
       helper: "Still to complete",
       icon: AssignmentOutlinedIcon,
-      color: "#1976D2",
-      background: "#EAF2FF",
+      color: "primary.main",
     },
     {
       label: "Completed",
       value: stats.completed,
       helper: "Finished assignments",
       icon: CheckCircleOutlineRoundedIcon,
-      color: "#2E7D32",
-      background: "#EAF6EC",
+      color: "success.main",
     },
   ];
 
@@ -229,7 +229,7 @@ function StudentDashboard() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -239,7 +239,11 @@ function StudentDashboard() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                lineHeight: 1.5,
+              }}
             >
               Here's what you need to focus on today.
             </Typography>
@@ -298,15 +302,13 @@ function StudentDashboard() {
                 const Icon = item.icon;
 
                 return (
-                  <Card
-                    key={item.label}
-                    elevation={0}
-                    sx={{
-                      border: "1px solid #E1EAF5",
-                      borderRadius: 2.5,
-                    }}
-                  >
-                    <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+                  <Card key={item.label} elevation={0} sx={sectionCardSx}>
+                    <CardContent
+                      sx={{
+                        p: 2.5,
+                        "&:last-child": { pb: 2.5 },
+                      }}
+                    >
                       <Stack
                         direction="row"
                         sx={{
@@ -318,7 +320,10 @@ function StudentDashboard() {
                         <Box sx={{ minWidth: 0 }}>
                           <Typography
                             variant="body2"
-                            sx={{ color: "text.secondary", fontWeight: 600 }}
+                            sx={{
+                              color: "text.secondary",
+                              fontWeight: 600,
+                            }}
                           >
                             {item.label}
                           </Typography>
@@ -327,7 +332,7 @@ function StudentDashboard() {
                             variant="h4"
                             sx={{
                               fontWeight: 800,
-                              color: "#1E293B",
+                              color: "text.primary",
                               mt: 0.75,
                               lineHeight: 1.2,
                               fontSize: { xs: "1.75rem", sm: "2rem" },
@@ -343,7 +348,7 @@ function StudentDashboard() {
                             width: 42,
                             height: 42,
                             flexShrink: 0,
-                            bgcolor: item.background,
+                            bgcolor: "action.selected",
                             color: item.color,
                           }}
                         >
@@ -402,7 +407,7 @@ function StudentDashboard() {
                 <Box
                   sx={{
                     height: 10,
-                    bgcolor: "#E8EEF5",
+                    bgcolor: "action.selected",
                     borderRadius: 10,
                     overflow: "hidden",
                   }}
@@ -411,7 +416,7 @@ function StudentDashboard() {
                     sx={{
                       width: `${progress}%`,
                       height: "100%",
-                      bgcolor: "#2E7D32",
+                      bgcolor: "success.main",
                       borderRadius: 10,
                       transition: "width 0.3s ease",
                     }}
@@ -468,7 +473,10 @@ function StudentDashboard() {
                         direction={{ xs: "column", sm: "row" }}
                         sx={{
                           justifyContent: "space-between",
-                          alignItems: { xs: "flex-start", sm: "center" },
+                          alignItems: {
+                            xs: "flex-start",
+                            sm: "center",
+                          },
                           gap: 1.5,
                           py: 2,
                         }}
@@ -477,6 +485,7 @@ function StudentDashboard() {
                           <Typography
                             sx={{
                               fontWeight: 700,
+                              color: "text.primary",
                               lineHeight: 1.4,
                               overflowWrap: "anywhere",
                             }}
@@ -486,7 +495,10 @@ function StudentDashboard() {
 
                           <Typography
                             variant="body2"
-                            sx={{ color: "text.secondary", mt: 0.5 }}
+                            sx={{
+                              color: "text.secondary",
+                              mt: 0.5,
+                            }}
                           >
                             Due {formatDate(task.dueDate)}
                           </Typography>
@@ -502,7 +514,10 @@ function StudentDashboard() {
                           color={
                             task.taskState === "overdue" ? "error" : "warning"
                           }
-                          sx={{ fontWeight: 700, flexShrink: 0 }}
+                          sx={{
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
                         />
                       </Stack>
                     ))}
@@ -553,8 +568,8 @@ function StudentDashboard() {
                         <Avatar
                           variant="rounded"
                           sx={{
-                            bgcolor: "#EAF2FF",
-                            color: "#1976D2",
+                            bgcolor: "action.selected",
+                            color: "primary.main",
                             width: 38,
                             height: 38,
                             flexShrink: 0,
@@ -567,6 +582,7 @@ function StudentDashboard() {
                           <Typography
                             sx={{
                               fontWeight: 600,
+                              color: "text.primary",
                               lineHeight: 1.4,
                               overflowWrap: "anywhere",
                             }}

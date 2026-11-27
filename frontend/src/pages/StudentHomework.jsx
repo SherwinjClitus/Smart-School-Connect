@@ -87,6 +87,15 @@ const statusConfig = {
   },
 };
 
+const sectionCardSx = {
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 2.5,
+  bgcolor: "background.paper",
+  backgroundImage: "none",
+  boxShadow: "none",
+};
+
 function StudentHomework() {
   const [homework, setHomework] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -225,7 +234,7 @@ function StudentHomework() {
               variant="h5"
               sx={{
                 fontWeight: 800,
-                color: "#1E293B",
+                color: "text.primary",
                 lineHeight: 1.3,
                 fontSize: { xs: "1.25rem", sm: "1.5rem" },
               }}
@@ -235,7 +244,11 @@ function StudentHomework() {
 
             <Typography
               variant="body2"
-              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+                lineHeight: 1.5,
+              }}
             >
               Manage your assignments and keep track of deadlines.
             </Typography>
@@ -277,14 +290,7 @@ function StudentHomework() {
         ) : (
           <>
             {/* Progress summary */}
-            <Card
-              elevation={0}
-              sx={{
-                border: "1px solid #E1EAF5",
-                borderRadius: 2.5,
-                mb: 3.5,
-              }}
-            >
+            <Card elevation={0} sx={{ ...sectionCardSx, mb: 3.5 }}>
               <CardContent
                 sx={{
                   p: { xs: 2.5, sm: 3 },
@@ -301,13 +307,22 @@ function StudentHomework() {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 800, lineHeight: 1.4 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        lineHeight: 1.4,
+                        color: "text.primary",
+                      }}
+                    >
                       Assignment Progress
                     </Typography>
 
                     <Typography
                       variant="body2"
-                      sx={{ color: "text.secondary", mt: 0.25 }}
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.25,
+                      }}
                     >
                       {stats.completed} of {stats.total} assignments completed
                     </Typography>
@@ -328,7 +343,7 @@ function StudentHomework() {
                 <Box
                   sx={{
                     height: 9,
-                    bgcolor: "#E8EEF5",
+                    bgcolor: "action.selected",
                     borderRadius: 10,
                     overflow: "hidden",
                   }}
@@ -337,7 +352,7 @@ function StudentHomework() {
                     sx={{
                       height: "100%",
                       width: `${progress}%`,
-                      bgcolor: "#2E7D32",
+                      bgcolor: "success.main",
                       borderRadius: 10,
                       transition: "width 0.3s ease",
                     }}
@@ -354,12 +369,14 @@ function StudentHomework() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               sx={{ mb: 2.5 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRoundedIcon color="action" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon color="action" />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
 
@@ -405,7 +422,12 @@ function StudentHomework() {
                 mb: 2,
               }}
             >
-              <Typography sx={{ fontWeight: 800, color: "#1E293B" }}>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  color: "text.primary",
+                }}
+              >
                 Assignments
               </Typography>
 
@@ -419,24 +441,39 @@ function StudentHomework() {
               <Card
                 elevation={0}
                 sx={{
-                  border: "1px dashed #CBD5E1",
+                  border: 1,
+                  borderStyle: "dashed",
+                  borderColor: "divider",
                   borderRadius: 2.5,
+                  bgcolor: "background.paper",
                   textAlign: "center",
                   py: 6,
                   px: 2,
                 }}
               >
                 <AssignmentOutlinedIcon
-                  sx={{ fontSize: 42, color: "#94A3B8", mb: 1 }}
+                  sx={{
+                    fontSize: 42,
+                    color: "text.disabled",
+                    mb: 1,
+                  }}
                 />
 
-                <Typography sx={{ fontWeight: 700 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    color: "text.primary",
+                  }}
+                >
                   No assignments found
                 </Typography>
 
                 <Typography
                   variant="body2"
-                  sx={{ color: "text.secondary", mt: 0.5 }}
+                  sx={{
+                    color: "text.secondary",
+                    mt: 0.5,
+                  }}
                 >
                   Try another filter or search term.
                 </Typography>
@@ -447,7 +484,11 @@ function StudentHomework() {
                     setFilter("all");
                     setSearch("");
                   }}
-                  sx={{ mt: 2, textTransform: "none", minHeight: 34 }}
+                  sx={{
+                    mt: 2,
+                    textTransform: "none",
+                    minHeight: 34,
+                  }}
                 >
                   Clear filters
                 </Button>
@@ -465,11 +506,11 @@ function StudentHomework() {
                       key={task._id}
                       elevation={0}
                       sx={{
-                        border: "1px solid #E1EAF5",
-                        borderRadius: 2.5,
-                        transition: "0.2s",
+                        ...sectionCardSx,
+                        mb: 0,
+                        transition: "border-color 0.2s",
                         "&:hover": {
-                          borderColor: "#A8C5E8",
+                          borderColor: "primary.main",
                         },
                       }}
                     >
@@ -501,7 +542,7 @@ function StudentHomework() {
                                 variant="subtitle1"
                                 sx={{
                                   fontWeight: 800,
-                                  color: "#1E293B",
+                                  color: "text.primary",
                                   lineHeight: 1.4,
                                   overflowWrap: "anywhere",
                                 }}
