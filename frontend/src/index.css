@@ -2,7 +2,36 @@
   box-sizing: border-box;
 }
 
+html {
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
+/* Smooth theme transitions */
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  #root {
+    transition:
+      background-color 300ms ease,
+      color 300ms ease;
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

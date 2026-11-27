@@ -127,6 +127,15 @@ function Topbar({ onMenuClick, title }) {
                 borderRadius: 2,
                 width: 38,
                 height: 38,
+                "&:hover": {
+                  bgcolor: "action.hover",
+                },
+                "& svg": {
+                  transition: "transform 300ms ease",
+                },
+                "&:active svg": {
+                  transform: "rotate(25deg)",
+                },
               }}
             >
               {mode === "light" ? (

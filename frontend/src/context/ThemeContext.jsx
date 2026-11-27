@@ -48,6 +48,8 @@ export function AppThemeProvider({ children }) {
             styleOverrides: {
               root: {
                 backgroundImage: "none",
+                transition:
+                  "background-color 300ms ease, color 300ms ease, border-color 300ms ease",
               },
             },
           },
@@ -55,6 +57,24 @@ export function AppThemeProvider({ children }) {
             styleOverrides: {
               root: {
                 backgroundImage: "none",
+                transition:
+                  "background-color 300ms ease, color 300ms ease, border-color 300ms ease",
+              },
+            },
+          },
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                transition:
+                  "background-color 300ms ease, color 300ms ease, border-color 300ms ease",
+              },
+            },
+          },
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                transition:
+                  "background-color 300ms ease, color 300ms ease, border-color 300ms ease",
               },
             },
           },
