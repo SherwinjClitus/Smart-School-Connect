@@ -9,6 +9,7 @@ import ParentDashboard from "./pages/ParentDashboard";
 import TeacherHomework from "./pages/TeacherHomework";
 import StudentHomework from "./pages/StudentHomework";
 import ParentHomework from "./pages/ParentHomework";
+import TeacherHomeworkSubmissions from "./pages/TeacherHomeworkSubmissions";
 
 import TeacherMessages from "./pages/TeacherMessages";
 import ParentMessages from "./pages/ParentMessages";
@@ -45,10 +46,17 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         <Route path="/teacher/homework" element={<TeacherHomework />} />
+
+        <Route
+          path="/teacher/homework/:homeworkId/submissions"
+          element={<TeacherHomeworkSubmissions />}
+        />
+
         <Route
           path="/teacher/conversations/new"
           element={<TeacherNewConversation />}
         />
+
         {/* Class announcements */}
         <Route path="/teacher/messages" element={<TeacherMessages />} />
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Alert,
@@ -8,7 +8,12 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  IconButton,
   InputAdornment,
   Stack,
   Tab,
@@ -19,12 +24,23 @@ import {
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 
 import DashboardLayout from "../components/layout/DashboardLayout";
 import api from "../services/api";
+
+const MAX_FILES = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 
 function getDayStart(value = new Date()) {
   const date = new Date(value);
@@ -33,7 +49,19 @@ function getDayStart(value = new Date()) {
 }
 
 function getTaskState(task) {
-  if (task.status === "completed") return "completed";
+  if (task.submissionStatus === "graded") return "completed";
+
+  if (task.submissionStatus === "resubmission_required") {
+    return "resubmission";
+  }
+
+  if (
+    task.submissionStatus === "submitted" ||
+    task.submissionStatus === "under_review"
+  ) {
+    return "submitted";
+  }
+
   if (!task.dueDate) return "pending";
 
   const dueDate = getDayStart(task.dueDate);
@@ -59,16 +87,32 @@ function formatDate(value) {
   });
 }
 
+function formatDateTime(value) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const statusConfig = {
   overdue: {
     label: "Overdue",
     color: "error",
-    description: "The due date has passed. Complete this as soon as possible.",
+    description: "The due date has passed. You can still submit your homework.",
   },
   today: {
     label: "Due Today",
     color: "warning",
-    description: "Try to finish this assignment today.",
+    description: "Try to submit this assignment today.",
   },
   upcoming: {
     label: "Upcoming",
@@ -78,12 +122,28 @@ const statusConfig = {
   pending: {
     label: "Pending",
     color: "warning",
-    description: "No due date has been specified.",
+    description: "Upload your completed homework to submit this assignment.",
+  },
+  submitted: {
+    label: "Submitted",
+    color: "info",
+    description: "Your homework has been submitted and is awaiting review.",
+  },
+  under_review: {
+    label: "Under Review",
+    color: "info",
+    description: "Your teacher is currently reviewing your homework.",
   },
   completed: {
-    label: "Completed",
+    label: "Graded",
     color: "success",
-    description: "You have completed this assignment.",
+    description: "Your teacher has reviewed and graded this assignment.",
+  },
+  resubmission: {
+    label: "Corrections Required",
+    color: "warning",
+    description:
+      "Your teacher has requested corrections. Please submit a new attempt.",
   },
 };
 
@@ -103,18 +163,67 @@ function StudentHomework() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [completingId, setCompletingId] = useState(null);
+
+  const [selectedHomework, setSelectedHomework] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadError, setUploadError] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const [viewingFileId, setViewingFileId] = useState(null);
+  const [fileViewError, setFileViewError] = useState("");
+
+  const fileInputRef = useRef(null);
 
   async function fetchHomework() {
     try {
       setLoading(true);
       setError("");
 
-      const response = await api.get("/homework/student");
+      const [homeworkResponse, submissionsResponse] = await Promise.all([
+        api.get("/homework/student"),
+        api.get("/submissions/student"),
+      ]);
 
-      setHomework(response.data.homework || []);
+      const assignments = homeworkResponse.data.homework || [];
+      const submissions = submissionsResponse.data.submissions || [];
+
+      // Match actual submissions with their homework assignments.
+      const submissionMap = new Map();
+
+      submissions.forEach((submission) => {
+        const homeworkId =
+          typeof submission.homework === "object"
+            ? submission.homework?._id
+            : submission.homework;
+
+        if (!homeworkId) return;
+
+        const attempts = submission.attempts || [];
+        const latestAttempt = attempts[attempts.length - 1] || null;
+
+        submissionMap.set(String(homeworkId), {
+          ...submission,
+          latestAttempt,
+        });
+      });
+
+      const updatedAssignments = assignments.map((task) => {
+        const submission = submissionMap.get(String(task._id)) || null;
+
+        return {
+          ...task,
+          submission,
+          latestAttempt: submission?.latestAttempt || null,
+          submissionStatus: submission?.latestAttempt?.status || "pending",
+        };
+      });
+
+      setHomework(updatedAssignments);
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to load homework.");
+      setError(
+        err.response?.data?.message ||
+          "Unable to load homework and submission information.",
+      );
     } finally {
       setLoading(false);
     }
@@ -123,28 +232,6 @@ function StudentHomework() {
   useEffect(() => {
     fetchHomework();
   }, []);
-
-  async function handleComplete(homeworkId) {
-    try {
-      setError("");
-      setCompletingId(homeworkId);
-
-      await api.patch(`/homework/${homeworkId}/complete`);
-
-      setHomework((previousHomework) =>
-        previousHomework.map((task) =>
-          task._id === homeworkId ? { ...task, status: "completed" } : task,
-        ),
-      );
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to update homework. Please try again.",
-      );
-    } finally {
-      setCompletingId(null);
-    }
-  }
 
   const tasks = useMemo(
     () =>
@@ -158,10 +245,21 @@ function StudentHomework() {
   const stats = useMemo(
     () => ({
       total: tasks.length,
-      pending: tasks.filter((task) => task.taskState !== "completed").length,
+      pending: tasks.filter(
+        (task) =>
+          task.taskState !== "completed" &&
+          task.taskState !== "submitted" &&
+          task.taskState !== "under_review",
+      ).length,
       overdue: tasks.filter((task) => task.taskState === "overdue").length,
       today: tasks.filter((task) => task.taskState === "today").length,
       completed: tasks.filter((task) => task.taskState === "completed").length,
+      submitted: tasks.filter(
+        (task) =>
+          task.taskState === "submitted" || task.taskState === "under_review",
+      ).length,
+      resubmission: tasks.filter((task) => task.taskState === "resubmission")
+        .length,
     }),
     [tasks],
   );
@@ -171,7 +269,13 @@ function StudentHomework() {
     { value: "pending", label: "Pending", count: stats.pending },
     { value: "overdue", label: "Overdue", count: stats.overdue },
     { value: "today", label: "Due Today", count: stats.today },
-    { value: "completed", label: "Completed", count: stats.completed },
+    { value: "submitted", label: "Submitted", count: stats.submitted },
+    {
+      value: "resubmission",
+      label: "Corrections",
+      count: stats.resubmission,
+    },
+    { value: "completed", label: "Graded", count: stats.completed },
   ];
 
   const filteredHomework = useMemo(() => {
@@ -181,7 +285,8 @@ function StudentHomework() {
       .filter((task) => {
         const matchesFilter =
           filter === "all" ||
-          (filter === "pending" && task.taskState !== "completed") ||
+          (filter === "submitted" &&
+            ["submitted", "under_review"].includes(task.taskState)) ||
           task.taskState === filter;
 
         const matchesSearch =
@@ -194,11 +299,14 @@ function StudentHomework() {
       })
       .sort((a, b) => {
         const order = {
-          overdue: 0,
-          today: 1,
-          upcoming: 2,
-          pending: 3,
-          completed: 4,
+          resubmission: 0,
+          overdue: 1,
+          today: 2,
+          upcoming: 3,
+          pending: 4,
+          submitted: 5,
+          under_review: 6,
+          completed: 7,
         };
 
         if (order[a.taskState] !== order[b.taskState]) {
@@ -213,8 +321,210 @@ function StudentHomework() {
   }, [tasks, filter, search]);
 
   const progress = stats.total
-    ? Math.round((stats.completed / stats.total) * 100)
+    ? Math.round(((stats.completed + stats.submitted) / stats.total) * 100)
     : 0;
+
+  function openSubmissionDialog(task) {
+    setSelectedHomework(task);
+    setSelectedFiles([]);
+    setUploadError("");
+  }
+
+  function closeSubmissionDialog() {
+    if (uploading) return;
+
+    setSelectedFiles([]);
+    setSelectedHomework(null);
+    setUploadError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleFileSelection(event) {
+    const incomingFiles = Array.from(event.target.files || []);
+
+    setUploadError("");
+
+    if (selectedFiles.length + incomingFiles.length > MAX_FILES) {
+      setUploadError(`You can upload a maximum of ${MAX_FILES} files.`);
+      event.target.value = "";
+      return;
+    }
+
+    const validFiles = [];
+
+    for (const file of incomingFiles) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setUploadError(
+          `${file.name} is not supported. Upload JPG, PNG, or PDF files only.`,
+        );
+        break;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(`${file.name} exceeds the 10 MB file size limit.`);
+        break;
+      }
+
+      validFiles.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`,
+        file,
+        previewUrl: file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : null,
+      });
+    }
+
+    if (validFiles.length > 0 && !event.target.value) {
+      setSelectedFiles((previous) => [...previous, ...validFiles]);
+    } else if (validFiles.length > 0) {
+      setSelectedFiles((previous) => [...previous, ...validFiles]);
+    }
+
+    event.target.value = "";
+  }
+
+  function removeSelectedFile(fileId) {
+    setSelectedFiles((previous) => {
+      const removedFile = previous.find((item) => item.id === fileId);
+
+      if (removedFile?.previewUrl) {
+        URL.revokeObjectURL(removedFile.previewUrl);
+      }
+
+      return previous.filter((item) => item.id !== fileId);
+    });
+  }
+
+  async function handleSubmitHomework() {
+    if (!selectedHomework) return;
+
+    if (selectedFiles.length === 0) {
+      setUploadError("Please select at least one photo or PDF.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadError("");
+
+      const formData = new FormData();
+
+      selectedFiles.forEach((item) => {
+        formData.append("files", item.file);
+      });
+
+      await api.post(`/submissions/${selectedHomework._id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      selectedFiles.forEach((item) => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
+
+      setSelectedFiles([]);
+      setSelectedHomework(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      await fetchHomework();
+    } catch (err) {
+      setUploadError(
+        err.response?.data?.message ||
+          "Unable to submit homework. Please try again.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+  async function handleViewFile(submission, attempt, file) {
+    const fileId = file._id;
+
+    if (!submission?._id || !attempt?.attemptNumber || !fileId) {
+      setFileViewError("Unable to identify this submission file.");
+      return;
+    }
+
+    // Open a blank tab immediately to avoid browser popup blocking.
+    const newWindow = window.open("about:blank", "_blank");
+
+    if (!newWindow) {
+      setFileViewError("Please allow pop-ups to view your homework file.");
+      return;
+    }
+
+    try {
+      setViewingFileId(fileId);
+      setFileViewError("");
+
+      const response = await api.get(
+        `/submissions/${submission._id}/attempt/${attempt.attemptNumber}/file/${fileId}`,
+      );
+
+      if (!response.data.url) {
+        throw new Error("The server did not return a file URL.");
+      }
+
+      newWindow.location.href = response.data.url;
+    } catch (err) {
+      newWindow.close();
+
+      setFileViewError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to open this file.",
+      );
+    } finally {
+      setViewingFileId(null);
+    }
+  }
+
+  function renderSubmissionFiles(submission, attempt, files) {
+    if (!files?.length) return null;
+
+    return (
+      <Stack spacing={1} sx={{ mt: 1 }}>
+        {files.map((file, index) => (
+          <Stack
+            key={file._id || `${file.publicId}-${index}`}
+            direction="row"
+            spacing={1}
+            alignItems="center"
+          >
+            {file.format === "pdf" ? (
+              <PictureAsPdfOutlinedIcon color="error" />
+            ) : (
+              <ImageOutlinedIcon color="primary" />
+            )}
+
+            <Typography
+              variant="body2"
+              sx={{ flex: 1, overflowWrap: "anywhere" }}
+            >
+              {file.originalName}
+            </Typography>
+
+            <Button
+              size="small"
+              startIcon={<VisibilityOutlined />}
+              disabled={viewingFileId === file._id}
+              onClick={() => handleViewFile(submission, attempt, file)}
+            >
+              {viewingFileId === file._id ? "Opening..." : "View"}
+            </Button>
+          </Stack>
+        ))}
+      </Stack>
+    );
+  }
 
   return (
     <DashboardLayout title="My Homework">
@@ -244,13 +554,9 @@ function StudentHomework() {
 
             <Typography
               variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 0.5,
-                lineHeight: 1.5,
-              }}
+              sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5 }}
             >
-              Manage your assignments and keep track of deadlines.
+              Complete your assignments and submit photos or PDF documents.
             </Typography>
           </Box>
 
@@ -258,7 +564,7 @@ function StudentHomework() {
             variant="outlined"
             startIcon={<RefreshRoundedIcon />}
             onClick={fetchHomework}
-            disabled={loading || completingId !== null}
+            disabled={loading || uploading}
             sx={{
               textTransform: "none",
               flexShrink: 0,
@@ -291,12 +597,7 @@ function StudentHomework() {
           <>
             {/* Progress summary */}
             <Card elevation={0} sx={{ ...sectionCardSx, mb: 3.5 }}>
-              <CardContent
-                sx={{
-                  p: { xs: 2.5, sm: 3 },
-                  "&:last-child": { pb: { xs: 2.5, sm: 3 } },
-                }}
-              >
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                 <Stack
                   direction="row"
                   sx={{
@@ -307,24 +608,16 @@ function StudentHomework() {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      sx={{
-                        fontWeight: 800,
-                        lineHeight: 1.4,
-                        color: "text.primary",
-                      }}
-                    >
+                    <Typography sx={{ fontWeight: 800, lineHeight: 1.4 }}>
                       Assignment Progress
                     </Typography>
 
                     <Typography
                       variant="body2"
-                      sx={{
-                        color: "text.secondary",
-                        mt: 0.25,
-                      }}
+                      sx={{ color: "text.secondary", mt: 0.25 }}
                     >
-                      {stats.completed} of {stats.total} assignments completed
+                      {stats.completed} graded and {stats.submitted} submitted
+                      out of {stats.total} assignments
                     </Typography>
                   </Box>
 
@@ -422,12 +715,7 @@ function StudentHomework() {
                 mb: 2,
               }}
             >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  color: "text.primary",
-                }}
-              >
+              <Typography sx={{ fontWeight: 800, color: "text.primary" }}>
                 Assignments
               </Typography>
 
@@ -452,28 +740,16 @@ function StudentHomework() {
                 }}
               >
                 <AssignmentOutlinedIcon
-                  sx={{
-                    fontSize: 42,
-                    color: "text.disabled",
-                    mb: 1,
-                  }}
+                  sx={{ fontSize: 42, color: "text.disabled", mb: 1 }}
                 />
 
-                <Typography
-                  sx={{
-                    fontWeight: 700,
-                    color: "text.primary",
-                  }}
-                >
+                <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                   No assignments found
                 </Typography>
 
                 <Typography
                   variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    mt: 0.5,
-                  }}
+                  sx={{ color: "text.secondary", mt: 0.5 }}
                 >
                   Try another filter or search term.
                 </Typography>
@@ -484,11 +760,7 @@ function StudentHomework() {
                     setFilter("all");
                     setSearch("");
                   }}
-                  sx={{
-                    mt: 2,
-                    textTransform: "none",
-                    minHeight: 34,
-                  }}
+                  sx={{ mt: 2, textTransform: "none", minHeight: 34 }}
                 >
                   Clear filters
                 </Button>
@@ -499,7 +771,11 @@ function StudentHomework() {
                   const status =
                     statusConfig[task.taskState] || statusConfig.pending;
 
-                  const isCompleting = completingId === task._id;
+                  const latestAttempt = task.latestAttempt;
+
+                  const canSubmit =
+                    !latestAttempt ||
+                    latestAttempt.status === "resubmission_required";
 
                   return (
                     <Card
@@ -514,12 +790,7 @@ function StudentHomework() {
                         },
                       }}
                     >
-                      <CardContent
-                        sx={{
-                          p: { xs: 2.5, sm: 3 },
-                          "&:last-child": { pb: { xs: 2.5, sm: 3 } },
-                        }}
-                      >
+                      <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                         <Stack
                           direction={{ xs: "column", sm: "row" }}
                           sx={{
@@ -597,7 +868,7 @@ function StudentHomework() {
 
                           <Box
                             sx={{
-                              minWidth: { sm: 170 },
+                              minWidth: { sm: 190 },
                               flexShrink: 0,
                               textAlign: { xs: "left", sm: "right" },
                             }}
@@ -637,30 +908,12 @@ function StudentHomework() {
                               </Typography>
                             </Stack>
 
-                            {task.status === "completed" ? (
-                              <Chip
-                                icon={<CheckCircleOutlineRoundedIcon />}
-                                label="Completed"
-                                color="success"
-                                size="small"
-                                sx={{ mt: 2, fontWeight: 700 }}
-                              />
-                            ) : (
+                            {canSubmit ? (
                               <Button
                                 variant="contained"
                                 size="small"
-                                startIcon={
-                                  isCompleting ? (
-                                    <CircularProgress
-                                      size={15}
-                                      color="inherit"
-                                    />
-                                  ) : (
-                                    <CheckCircleOutlineRoundedIcon />
-                                  )
-                                }
-                                disabled={isCompleting || completingId !== null}
-                                onClick={() => handleComplete(task._id)}
+                                startIcon={<CloudUploadOutlinedIcon />}
+                                onClick={() => openSubmissionDialog(task)}
                                 sx={{
                                   mt: 2,
                                   minHeight: 36,
@@ -671,27 +924,118 @@ function StudentHomework() {
                                   whiteSpace: "nowrap",
                                 }}
                               >
-                                {isCompleting ? "Saving..." : "Mark Complete"}
+                                {latestAttempt
+                                  ? "Resubmit Homework"
+                                  : "Submit Homework"}
                               </Button>
+                            ) : (
+                              <Chip
+                                icon={<CheckCircleOutlineRoundedIcon />}
+                                label={
+                                  task.submissionStatus === "graded"
+                                    ? "Graded"
+                                    : "Submission Received"
+                                }
+                                color={
+                                  task.submissionStatus === "graded"
+                                    ? "success"
+                                    : "info"
+                                }
+                                size="small"
+                                sx={{ mt: 2, fontWeight: 700 }}
+                              />
                             )}
                           </Box>
                         </Stack>
 
-                        {task.status !== "completed" && (
-                          <>
-                            <Divider sx={{ my: 2 }} />
+                        <Divider sx={{ my: 2 }} />
+
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: "text.secondary",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {status.description}
+                        </Typography>
+
+                        {/* Latest submission information */}
+                        {latestAttempt && (
+                          <Box
+                            sx={{
+                              mt: 2,
+                              p: 2,
+                              borderRadius: 2,
+                              bgcolor: "action.hover",
+                            }}
+                          >
+                            <Stack
+                              direction={{ xs: "column", sm: "row" }}
+                              justifyContent="space-between"
+                              spacing={1}
+                            >
+                              <Typography variant="body2" fontWeight={700}>
+                                Attempt {latestAttempt.attemptNumber}
+                              </Typography>
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Submitted:{" "}
+                                {formatDateTime(latestAttempt.submittedAt)}
+                              </Typography>
+                            </Stack>
+
+                            {latestAttempt.marks !== null &&
+                              latestAttempt.marks !== undefined && (
+                                <Typography
+                                  variant="body2"
+                                  sx={{ mt: 1 }}
+                                  fontWeight={700}
+                                >
+                                  Marks: {latestAttempt.marks}
+                                </Typography>
+                              )}
+
+                            {latestAttempt.feedback && (
+                              <Alert
+                                severity={
+                                  latestAttempt.status ===
+                                  "resubmission_required"
+                                    ? "warning"
+                                    : "info"
+                                }
+                                sx={{ mt: 1.5 }}
+                              >
+                                <Typography variant="body2" fontWeight={700}>
+                                  Teacher Feedback
+                                </Typography>
+                                {latestAttempt.feedback}
+                              </Alert>
+                            )}
+                            {fileViewError && (
+                              <Alert severity="error" sx={{ mt: 2 }}>
+                                {fileViewError}
+                              </Alert>
+                            )}
 
                             <Typography
-                              variant="caption"
-                              sx={{
-                                display: "block",
-                                color: "text.secondary",
-                                lineHeight: 1.5,
-                              }}
+                              variant="body2"
+                              fontWeight={700}
+                              sx={{ mt: 1.5 }}
                             >
-                              {status.description}
+                              Uploaded Files
                             </Typography>
-                          </>
+
+                            {renderSubmissionFiles(
+                              task.submission,
+                              latestAttempt,
+                              latestAttempt.files,
+                            )}
+                          </Box>
                         )}
                       </CardContent>
                     </Card>
@@ -702,6 +1046,143 @@ function StudentHomework() {
           </>
         )}
       </Box>
+
+      {/* Submission dialog */}
+      <Dialog
+        open={Boolean(selectedHomework)}
+        onClose={closeSubmissionDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>Submit Homework</DialogTitle>
+
+        <DialogContent>
+          {selectedHomework && (
+            <Stack spacing={2.5} sx={{ pt: 1 }}>
+              <Box>
+                <Typography fontWeight={700}>
+                  {selectedHomework.title}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  {selectedHomework.description}
+                </Typography>
+              </Box>
+
+              <Alert severity="info">
+                Upload up to 5 files. Accepted formats: JPG, PNG, and PDF. Each
+                file must be 10 MB or smaller.
+              </Alert>
+
+              {uploadError && <Alert severity="error">{uploadError}</Alert>}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                multiple
+                hidden
+                onChange={handleFileSelection}
+              />
+
+              <Button
+                variant="outlined"
+                startIcon={<CloudUploadOutlinedIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || selectedFiles.length >= MAX_FILES}
+                fullWidth
+                sx={{ minHeight: 48, textTransform: "none" }}
+              >
+                Choose Photos or PDFs
+              </Button>
+
+              <Typography variant="caption" color="text.secondary">
+                {selectedFiles.length} of {MAX_FILES} files selected
+              </Typography>
+
+              {selectedFiles.map((item) => (
+                <Card
+                  key={item.id}
+                  variant="outlined"
+                  sx={{ borderRadius: 2, overflow: "hidden" }}
+                >
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      {item.previewUrl ? (
+                        <Box
+                          component="img"
+                          src={item.previewUrl}
+                          alt={item.file.name}
+                          sx={{
+                            width: 64,
+                            height: 64,
+                            objectFit: "cover",
+                            borderRadius: 1,
+                          }}
+                        />
+                      ) : item.file.type === "application/pdf" ? (
+                        <PictureAsPdfOutlinedIcon
+                          sx={{ fontSize: 38, color: "error.main" }}
+                        />
+                      ) : (
+                        <InsertDriveFileOutlinedIcon sx={{ fontSize: 38 }} />
+                      )}
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          sx={{ overflowWrap: "anywhere" }}
+                        >
+                          {item.file.name}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          {(item.file.size / (1024 * 1024)).toFixed(2)} MB
+                        </Typography>
+                      </Box>
+
+                      <IconButton
+                        color="error"
+                        onClick={() => removeSelectedFile(item.id)}
+                        disabled={uploading}
+                        aria-label={`Remove ${item.file.name}`}
+                      >
+                        <DeleteOutlineRoundedIcon />
+                      </IconButton>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={closeSubmissionDialog}
+            disabled={uploading}
+            color="inherit"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={handleSubmitHomework}
+            disabled={uploading || selectedFiles.length === 0}
+            startIcon={
+              uploading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <CloudUploadOutlinedIcon />
+              )
+            }
+          >
+            {uploading ? "Uploading..." : "Submit Assignment"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DashboardLayout>
   );
 }

@@ -24,6 +24,11 @@ const submissionFileSchema = new mongoose.Schema(
       enum: ["image", "raw"],
       required: true,
     },
+    deliveryType: {
+      type: String,
+      enum: ["upload", "private", "authenticated"],
+      default: "upload",
+    },
     size: {
       type: Number,
       required: true,

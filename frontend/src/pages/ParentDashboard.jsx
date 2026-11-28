@@ -142,6 +142,16 @@ function ParentDashboard() {
     fetchDashboardData();
   }, []);
 
+  // Keep the selected child valid if the list changes (e.g. child unlinked)
+  useEffect(() => {
+    if (
+      selectedChild !== "all" &&
+      !children.some((item) => getChildId(item) === selectedChild)
+    ) {
+      setSelectedChild("all");
+    }
+  }, [children, selectedChild]);
+
   const visibleChildren = useMemo(() => {
     if (selectedChild === "all") return children;
 
@@ -191,14 +201,17 @@ function ParentDashboard() {
     [allHomework],
   );
 
-  const recentTasks = useMemo(
+  // Only include assignments that are still actionable — completed work
+  // should not appear in a "What's coming next" list.
+  const upcomingTasks = useMemo(
     () =>
       [...allHomework]
-        .sort(
-          (a, b) =>
-            new Date(a.dueDate || a.createdAt || 0) -
-            new Date(b.dueDate || b.createdAt || 0),
-        )
+        .filter((task) => task.taskState !== "completed")
+        .sort((a, b) => {
+          const aDue = new Date(a.dueDate || a.createdAt || 0).getTime();
+          const bDue = new Date(b.dueDate || b.createdAt || 0).getTime();
+          return aDue - bDue;
+        })
         .slice(0, 4),
     [allHomework],
   );
@@ -332,7 +345,7 @@ function ParentDashboard() {
         </Stack>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
             {error}
           </Alert>
         )}
@@ -587,124 +600,131 @@ function ParentDashboard() {
                   </Button>
                 </Stack>
 
-                <Stack divider={<Divider flexItem />} spacing={0}>
-                  {visibleChildren.map((item) => {
-                    const homework = (item.homework || []).map((task) => ({
-                      ...task,
-                      taskState: getTaskState(task),
-                    }));
+                {visibleChildren.length === 0 ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    No children available for this selection.
+                  </Typography>
+                ) : (
+                  <Stack divider={<Divider flexItem />} spacing={0}>
+                    {visibleChildren.map((item) => {
+                      const homework = (item.homework || []).map((task) => ({
+                        ...task,
+                        taskState: getTaskState(task),
+                      }));
 
-                    const completed = homework.filter(
-                      (task) => task.taskState === "completed",
-                    ).length;
+                      const completed = homework.filter(
+                        (task) => task.taskState === "completed",
+                      ).length;
 
-                    const overdue = homework.filter(
-                      (task) => task.taskState === "overdue",
-                    ).length;
+                      const overdue = homework.filter(
+                        (task) => task.taskState === "overdue",
+                      ).length;
 
-                    const percentage = homework.length
-                      ? Math.round((completed / homework.length) * 100)
-                      : 0;
+                      const percentage = homework.length
+                        ? Math.round((completed / homework.length) * 100)
+                        : 0;
 
-                    return (
-                      <Stack
-                        key={getChildId(item)}
-                        direction={{ xs: "column", sm: "row" }}
-                        sx={{
-                          justifyContent: "space-between",
-                          alignItems: {
-                            xs: "flex-start",
-                            sm: "center",
-                          },
-                          gap: 2,
-                          py: 2.5,
-                        }}
-                      >
+                      return (
                         <Stack
-                          direction="row"
+                          key={getChildId(item)}
+                          direction={{ xs: "column", sm: "row" }}
                           sx={{
-                            alignItems: "center",
-                            gap: 1.5,
+                            justifyContent: "space-between",
+                            alignItems: {
+                              xs: "flex-start",
+                              sm: "center",
+                            },
+                            gap: 2,
+                            py: 2.5,
                           }}
                         >
-                          <Avatar
+                          <Stack
+                            direction="row"
                             sx={{
-                              flexShrink: 0,
-                              bgcolor: "action.selected",
-                              color: "primary.main",
-                              fontWeight: 700,
+                              alignItems: "center",
+                              gap: 1.5,
                             }}
                           >
-                            {item.child?.name?.charAt(0)?.toUpperCase() || "?"}
-                          </Avatar>
-
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography
+                            <Avatar
                               sx={{
+                                flexShrink: 0,
+                                bgcolor: "action.selected",
+                                color: "primary.main",
                                 fontWeight: 700,
-                                lineHeight: 1.4,
-                                color: "text.primary",
                               }}
                             >
-                              {item.child?.name || "Unknown"}
-                            </Typography>
+                              {item.child?.name?.charAt(0)?.toUpperCase() ||
+                                "?"}
+                            </Avatar>
 
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                display: "block",
-                                color: "text.secondary",
-                              }}
-                            >
-                              {homework.length} assignments
-                            </Typography>
-                          </Box>
-                        </Stack>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  lineHeight: 1.4,
+                                  color: "text.primary",
+                                }}
+                              >
+                                {item.child?.name || "Unknown"}
+                              </Typography>
 
-                        <Stack
-                          direction="row"
-                          sx={{
-                            alignItems: "center",
-                            flexWrap: "wrap",
-                            gap: 1.25,
-                          }}
-                        >
-                          <Chip
-                            size="small"
-                            label={`${percentage}% completed`}
-                            color="success"
-                            variant="outlined"
-                          />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: "block",
+                                  color: "text.secondary",
+                                }}
+                              >
+                                {homework.length} assignments
+                              </Typography>
+                            </Box>
+                          </Stack>
 
-                          {overdue > 0 && (
+                          <Stack
+                            direction="row"
+                            sx={{
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              gap: 1.25,
+                            }}
+                          >
                             <Chip
                               size="small"
-                              label={`${overdue} overdue`}
-                              color="error"
+                              label={`${percentage}% completed`}
+                              color="success"
+                              variant="outlined"
                             />
-                          )}
 
-                          <Button
-                            size="small"
-                            onClick={() =>
-                              navigate("/parent/homework", {
-                                state: {
-                                  selectedChild: getChildId(item),
-                                },
-                              })
-                            }
-                            sx={{
-                              textTransform: "none",
-                              minHeight: 32,
-                            }}
-                          >
-                            View
-                          </Button>
+                            {overdue > 0 && (
+                              <Chip
+                                size="small"
+                                label={`${overdue} overdue`}
+                                color="error"
+                              />
+                            )}
+
+                            <Button
+                              size="small"
+                              onClick={() =>
+                                navigate("/parent/homework", {
+                                  state: {
+                                    selectedChild: getChildId(item),
+                                  },
+                                })
+                              }
+                              sx={{
+                                textTransform: "none",
+                                minHeight: 32,
+                              }}
+                            >
+                              View
+                            </Button>
+                          </Stack>
                         </Stack>
-                      </Stack>
-                    );
-                  })}
-                </Stack>
+                      );
+                    })}
+                  </Stack>
+                )}
               </CardContent>
             </Card>
 
@@ -737,13 +757,13 @@ function ParentDashboard() {
                   </Button>
                 </Stack>
 
-                {recentTasks.length === 0 ? (
+                {upcomingTasks.length === 0 ? (
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    No assignments available.
+                    No upcoming assignments.
                   </Typography>
                 ) : (
                   <Stack divider={<Divider flexItem />} spacing={0}>
-                    {recentTasks.map((task) => (
+                    {upcomingTasks.map((task) => (
                       <Stack
                         key={task._id}
                         direction="row"
@@ -782,22 +802,18 @@ function ParentDashboard() {
                           size="small"
                           sx={{ flexShrink: 0 }}
                           label={
-                            task.taskState === "completed"
-                              ? "Completed"
-                              : task.taskState === "overdue"
-                                ? "Overdue"
-                                : task.taskState === "today"
-                                  ? "Due Today"
-                                  : "Upcoming"
+                            task.taskState === "overdue"
+                              ? "Overdue"
+                              : task.taskState === "today"
+                                ? "Due Today"
+                                : "Upcoming"
                           }
                           color={
-                            task.taskState === "completed"
-                              ? "success"
-                              : task.taskState === "overdue"
-                                ? "error"
-                                : task.taskState === "today"
-                                  ? "warning"
-                                  : "info"
+                            task.taskState === "overdue"
+                              ? "error"
+                              : task.taskState === "today"
+                                ? "warning"
+                                : "info"
                           }
                         />
                       </Stack>
@@ -841,23 +857,26 @@ function ParentDashboard() {
                             color: "text.primary",
                           }}
                         >
-                          {latestAnnouncement.subject}
+                          {latestAnnouncement.subject ||
+                            "Untitled announcement"}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "text.secondary",
-                            mt: 0.75,
-                            lineHeight: 1.6,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {latestAnnouncement.content}
-                        </Typography>
+                        {latestAnnouncement.content && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.secondary",
+                              mt: 0.75,
+                              lineHeight: 1.6,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {latestAnnouncement.content}
+                          </Typography>
+                        )}
 
                         <Typography
                           variant="caption"

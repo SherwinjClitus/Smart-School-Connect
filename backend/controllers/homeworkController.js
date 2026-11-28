@@ -1,6 +1,7 @@
 const Homework = require("../models/Homework");
 const SchoolClass = require("../models/Class");
 const User = require("../models/User");
+const Submission = require("../models/Submission");
 
 // TEACHER: Create homework for a class
 const createHomework = async (req, res) => {
@@ -59,25 +60,91 @@ const createHomework = async (req, res) => {
 };
 
 // TEACHER: View homework created by the logged-in teacher
+
 const getTeacherHomework = async (req, res) => {
   try {
+    // Fetch homework created by this teacher
     const homework = await Homework.find({
       createdBy: req.user.id,
     })
-      .populate("schoolClass", "name grade section")
+      .populate("schoolClass", "name grade section students")
       .sort({ dueDate: 1 });
 
+    const homeworkIds = homework.map((task) => task._id);
+
+    // Fetch actual student submissions for these assignments
+    const submissions = await Submission.find({
+      homework: { $in: homeworkIds },
+    }).select("homework student attempts");
+
+    // Group submissions by homework ID
+    const submissionMap = new Map();
+
+    submissions.forEach((submission) => {
+      const homeworkId = submission.homework.toString();
+
+      if (!submissionMap.has(homeworkId)) {
+        submissionMap.set(homeworkId, []);
+      }
+
+      submissionMap.get(homeworkId).push(submission);
+    });
+
+    // Calculate progress for each assignment
+    const homeworkWithStats = homework.map((task) => {
+      const totalStudents = task.schoolClass?.students?.length || 0;
+
+      const taskSubmissions =
+        submissionMap.get(task._id.toString()) || [];
+
+      let underReview = 0;
+      let graded = 0;
+      let resubmissionRequired = 0;
+
+      taskSubmissions.forEach((submission) => {
+        const latestAttempt =
+          submission.attempts[submission.attempts.length - 1];
+
+        if (!latestAttempt) return;
+
+        if (latestAttempt.status === "under_review") {
+          underReview++;
+        } else if (latestAttempt.status === "graded") {
+          graded++;
+        } else if (latestAttempt.status === "resubmission_required") {
+          resubmissionRequired++;
+        }
+      });
+
+      const submitted = taskSubmissions.length;
+      const pending = Math.max(0, totalStudents - submitted);
+
+      return {
+        ...task.toObject(),
+        submissionStats: {
+          totalStudents,
+          submitted,
+          pending,
+          underReview,
+          graded,
+          resubmissionRequired,
+        },
+      };
+    });
+
     return res.status(200).json({
-      count: homework.length,
-      homework,
+      count: homeworkWithStats.length,
+      homework: homeworkWithStats,
     });
   } catch (error) {
+    console.error("Get teacher homework error:", error);
+
     return res.status(500).json({
       message: "Failed to fetch homework.",
-      error: error.message,
     });
   }
 };
+
 
 // STUDENT: View homework assigned to their class
 const getStudentHomework = async (req, res) => {

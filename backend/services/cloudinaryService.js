@@ -8,6 +8,7 @@ const uploadToCloudinary = (file) => {
     const isPDF = file.mimetype === "application/pdf";
 
     const resourceType = isPDF ? "raw" : "image";
+    const deliveryType = "authenticated";
 
     const extension = path.extname(file.originalname).toLowerCase();
 
@@ -24,6 +25,7 @@ const uploadToCloudinary = (file) => {
       {
         folder: "smart-school-connect/homework",
         resource_type: resourceType,
+        type: deliveryType,
         public_id: publicId,
       },
       (error, result) => {
@@ -37,6 +39,7 @@ const uploadToCloudinary = (file) => {
           publicId: result.public_id,
           format: extension.replace(".", ""),
           resourceType,
+          deliveryType,
           size: file.size,
         });
       },
@@ -47,12 +50,10 @@ const uploadToCloudinary = (file) => {
 };
 
 const deleteFromCloudinary = async (file) => {
-  const result = await cloudinary.uploader.destroy(file.publicId, {
+  return cloudinary.uploader.destroy(file.publicId, {
     resource_type: file.resourceType,
-    type: "upload",
+    type: file.deliveryType || "upload",
   });
-
-  return result;
 };
 
 const uploadHomeworkFiles = async (files) => {
@@ -66,7 +67,6 @@ const uploadHomeworkFiles = async (files) => {
 
     return uploadedFiles;
   } catch (error) {
-    // Remove files that were uploaded successfully
     await Promise.allSettled(
       uploadedFiles.map((file) => deleteFromCloudinary(file)),
     );
@@ -74,9 +74,19 @@ const uploadHomeworkFiles = async (files) => {
     throw error;
   }
 };
+const generatePrivateFileUrl = (file) => {
+  const expiresAt = Math.floor(Date.now() / 1000) + 300;
+
+  return cloudinary.utils.private_download_url(file.publicId, file.format, {
+    resource_type: file.resourceType,
+    type: file.deliveryType,
+    expires_at: expiresAt,
+  });
+};
 
 module.exports = {
   uploadToCloudinary,
   deleteFromCloudinary,
   uploadHomeworkFiles,
+  generatePrivateFileUrl,
 };
