@@ -13,6 +13,7 @@ import {
   Divider,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
@@ -101,6 +102,8 @@ const smallButtonSx = {
 
 function StudentDashboard() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   const [homework, setHomework] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,34 +183,43 @@ function StudentDashboard() {
     ? Math.round((stats.completed / stats.total) * 100)
     : 0;
 
+  // Match the teacher dashboard's role-wide statistic card palette.
   const statCards = [
     {
       label: "Overdue",
       value: stats.overdue,
       helper: "Needs attention",
       icon: WarningAmberRoundedIcon,
-      color: "error.main",
+      color: isDark ? "#FDA4B4" : "#D45B70",
+      background: isDark ? "#472B36" : "#FCECEF",
+      border: isDark ? "#68404D" : "#F5C9D2",
     },
     {
       label: "Due Today",
       value: stats.today,
       helper: "Complete today",
       icon: TodayOutlinedIcon,
-      color: "warning.main",
+      color: isDark ? "#FBBF65" : "#ED8B00",
+      background: isDark ? "#46351F" : "#FFF3DF",
+      border: isDark ? "#69502D" : "#FFE0A8",
     },
     {
       label: "Upcoming",
       value: stats.upcoming,
       helper: "Still to complete",
       icon: AssignmentOutlinedIcon,
-      color: "primary.main",
+      color: isDark ? "#93C5FD" : "#1976D2",
+      background: isDark ? "#1E3553" : "#EAF2FF",
+      border: isDark ? "#304D70" : "#C9DCFF",
     },
     {
       label: "Completed",
       value: stats.completed,
       helper: "Finished assignments",
       icon: CheckCircleOutlineRoundedIcon,
-      color: "success.main",
+      color: isDark ? "#6EE7D8" : "#00897B",
+      background: isDark ? "#193D3A" : "#E3F5F2",
+      border: isDark ? "#285B53" : "#B8E5DC",
     },
   ];
 
@@ -302,70 +314,80 @@ function StudentDashboard() {
                 const Icon = item.icon;
 
                 return (
-                  <Card key={item.label} elevation={0} sx={sectionCardSx}>
+                  <Card
+                    key={item.label}
+                    elevation={0}
+                    sx={{
+                      position: "relative",
+                      bgcolor: item.background,
+                      border: `1px solid ${item.border}`,
+                      borderRadius: 3,
+                      minHeight: 150,
+                      overflow: "hidden",
+                      transition: "all 0.25s ease",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: isDark
+                          ? "0 10px 25px rgba(0,0,0,0.2)"
+                          : "0 10px 25px rgba(25,118,210,0.10)",
+                      },
+                    }}
+                  >
                     <CardContent
                       sx={{
-                        p: 2.5,
-                        "&:last-child": { pb: 2.5 },
+                        p: 3,
+                        height: "100%",
+                        "&:last-child": { pb: 3 },
                       }}
                     >
-                      <Stack
-                        direction="row"
-                        sx={{
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          gap: 1.5,
-                        }}
+                      <Typography
+                        color={isDark ? "#CBD5E1" : "#64748B"}
+                        fontWeight={600}
+                        variant="body2"
                       >
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "text.secondary",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {item.label}
-                          </Typography>
+                        {item.label}
+                      </Typography>
 
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              fontWeight: 800,
-                              color: "text.primary",
-                              mt: 0.75,
-                              lineHeight: 1.2,
-                              fontSize: { xs: "1.75rem", sm: "2rem" },
-                            }}
-                          >
-                            {item.value}
-                          </Typography>
-                        </Box>
-
-                        <Avatar
-                          variant="rounded"
-                          sx={{
-                            width: 42,
-                            height: 42,
-                            flexShrink: 0,
-                            bgcolor: "action.selected",
-                            color: item.color,
-                          }}
-                        >
-                          <Icon />
-                        </Avatar>
-                      </Stack>
+                      <Typography
+                        variant="h3"
+                        fontWeight={800}
+                        color={isDark ? "#F1F5F9" : "#263B53"}
+                        mt={2}
+                      >
+                        {item.value}
+                      </Typography>
 
                       <Typography
                         variant="caption"
                         sx={{
                           display: "block",
-                          color: "text.secondary",
-                          mt: 1.5,
+                          color: isDark ? "#CBD5E1" : "#64748B",
+                          mt: 0.75,
                         }}
                       >
                         {item.helper}
                       </Typography>
+
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 24,
+                          right: 24,
+                          width: 58,
+                          height: 58,
+                          borderRadius: 3,
+                          bgcolor: isDark ? "#263447" : "#FFFFFF",
+                          color: item.color,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: isDark
+                            ? "0 4px 12px rgba(0,0,0,0.18)"
+                            : "0 4px 12px rgba(15,23,42,0.07)",
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 29 }} />
+                      </Box>
                     </CardContent>
                   </Card>
                 );
