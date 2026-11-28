@@ -13,7 +13,14 @@ const submissionRoutes = require("./routes/submissionRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://smart-school-connect-psi.vercel.app",
+    ],
+  })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
