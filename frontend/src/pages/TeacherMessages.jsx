@@ -33,6 +33,18 @@ const categories = [
   { value: "general_update", label: "General Update" },
 ];
 
+async function fetchTeacherMessagesPageData() {
+  const [classResponse, messageResponse] = await Promise.all([
+    api.get("/classes/my-classes"),
+    api.get("/messages/teacher"),
+  ]);
+
+  return {
+    classes: classResponse.data.classes || [],
+    messages: messageResponse.data.messages || [],
+  };
+}
+
 function TeacherMessages() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -96,13 +108,10 @@ function TeacherMessages() {
       setLoading(true);
       setError("");
 
-      const [classResponse, messageResponse] = await Promise.all([
-        api.get("/classes/my-classes"),
-        api.get("/messages/teacher"),
-      ]);
+      const pageData = await fetchTeacherMessagesPageData();
 
-      setClasses(classResponse.data.classes || []);
-      setMessages(messageResponse.data.messages || []);
+      setClasses(pageData.classes);
+      setMessages(pageData.messages);
     } catch (err) {
       setError(
         err.response?.data?.message || "Failed to load announcement data.",
@@ -112,8 +121,34 @@ function TeacherMessages() {
     }
   };
 
+  // Fetch initial page data without calling setState directly in the effect.
   useEffect(() => {
-    loadPageData();
+    let isActive = true;
+
+    fetchTeacherMessagesPageData()
+      .then((pageData) => {
+        if (!isActive) return;
+
+        setClasses(pageData.classes);
+        setMessages(pageData.messages);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message || "Failed to load announcement data.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   // Improve announcement using Nemotron

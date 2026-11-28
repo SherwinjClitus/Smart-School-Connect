@@ -24,7 +24,8 @@ import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 
 import api from "../../services/api";
 import ReactMarkdown from "react-markdown";
-import StellaAvatar, { StellaFaceCapture, useStellaFace } from "./StellaAvatar";
+import StellaAvatar, { StellaFaceCapture } from "./StellaAvatar";
+import { useStellaFace } from "./useStellaFace";
 
 const initialMessage = {
   role: "assistant",
@@ -40,9 +41,8 @@ const SUGGESTIONS = [
 const BUBBLE_KEY = "stella-bubble-dismissed";
 
 /*
-  Small round Stella beside chat messages. It uses a one-time snapshot of the
-  3D model (see StellaAvatar.jsx), so there is no extra WebGL canvas per
-  message. Until the snapshot is ready, a sparkle icon shows for a moment.
+  Small round Stella beside chat messages.
+  Uses a one-time snapshot of the 3D model.
 */
 function StellaBadge({ size = 38 }) {
   const face = useStellaFace();
@@ -62,7 +62,10 @@ function StellaBadge({ size = 38 }) {
         border: 2,
         borderColor: "background.paper",
         boxShadow: 1,
-        "& img": { objectFit: "cover", transform: "scale(1.2)" },
+        "& img": {
+          objectFit: "cover",
+          transform: "scale(1.2)",
+        },
       }}
     >
       <AutoAwesomeRoundedIcon sx={{ fontSize: size * 0.55 }} />
@@ -72,7 +75,14 @@ function StellaBadge({ size = 38 }) {
 
 function TypingDots() {
   return (
-    <Stack direction="row" spacing={0.6} alignItems="center" sx={{ px: 0.5 }}>
+    <Stack
+      direction="row"
+      spacing={0.6}
+      sx={{
+        px: 0.5,
+        alignItems: "center",
+      }}
+    >
       {[0, 1, 2].map((i) => (
         <Box
           key={i}
@@ -84,10 +94,18 @@ function TypingDots() {
             animation: "stellaDot 1.1s ease-in-out infinite",
             animationDelay: `${i * 0.15}s`,
             "@keyframes stellaDot": {
-              "0%, 80%, 100%": { opacity: 0.3, transform: "translateY(0)" },
-              "40%": { opacity: 1, transform: "translateY(-4px)" },
+              "0%, 80%, 100%": {
+                opacity: 0.3,
+                transform: "translateY(0)",
+              },
+              "40%": {
+                opacity: 1,
+                transform: "translateY(-4px)",
+              },
             },
-            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+            "@media (prefers-reduced-motion: reduce)": {
+              animation: "none",
+            },
           }}
         />
       ))}
@@ -111,24 +129,31 @@ function FloatingAI() {
   // Greeting bubble: appears once per visit, after a short delay
   useEffect(() => {
     let dismissed = false;
+
     try {
       dismissed = sessionStorage.getItem(BUBBLE_KEY) === "1";
     } catch {
       /* storage unavailable, show the bubble anyway */
     }
+
     if (dismissed) return;
 
     const timer = setTimeout(() => setShowBubble(true), 2500);
+
     return () => clearTimeout(timer);
   }, []);
 
   // Keep the newest message in view
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, loading, open]);
 
   const dismissBubble = () => {
     setShowBubble(false);
+
     try {
       sessionStorage.setItem(BUBBLE_KEY, "1");
     } catch {
@@ -164,7 +189,10 @@ function FloatingAI() {
 
       setMessages((previous) => [
         ...previous,
-        { role: "assistant", content: response.data.answer },
+        {
+          role: "assistant",
+          content: response.data.answer,
+        },
       ]);
     } catch (err) {
       setError(
@@ -184,7 +212,10 @@ function FloatingAI() {
 
     setMessages((previous) => [
       ...previous,
-      { role: "user", content: "Summarize my homework" },
+      {
+        role: "user",
+        content: "Summarize my homework",
+      },
     ]);
 
     setLoading(true);
@@ -198,7 +229,10 @@ function FloatingAI() {
 
       setMessages((previous) => [
         ...previous,
-        { role: "assistant", content: response.data.answer },
+        {
+          role: "assistant",
+          content: response.data.answer,
+        },
       ]);
     } catch (err) {
       setError(
@@ -229,13 +263,15 @@ function FloatingAI() {
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Closed state: launcher                                              */
-  /* ------------------------------------------------------------------ */
+  /* --------------------------------------------------
+     Closed state: launcher
+  -------------------------------------------------- */
+
   if (!open) {
     return (
       <>
         <StellaFaceCapture />
+
         <Box
           sx={{
             position: "fixed",
@@ -248,7 +284,7 @@ function FloatingAI() {
             gap: 1,
           }}
         >
-          {/* Greeting bubble: says plainly that this is an AI */}
+          {/* Greeting bubble */}
           {showBubble && (
             <Paper
               elevation={6}
@@ -264,8 +300,14 @@ function FloatingAI() {
                 cursor: "pointer",
                 animation: "stellaBubbleIn 0.5s ease-out",
                 "@keyframes stellaBubbleIn": {
-                  from: { opacity: 0, transform: "translateY(10px)" },
-                  to: { opacity: 1, transform: "translateY(0)" },
+                  from: {
+                    opacity: 0,
+                    transform: "translateY(10px)",
+                  },
+                  to: {
+                    opacity: 1,
+                    transform: "translateY(0)",
+                  },
                 },
                 "@media (prefers-reduced-motion: reduce)": {
                   animation: "none",
@@ -276,6 +318,7 @@ function FloatingAI() {
               <Typography variant="subtitle2" fontWeight={800}>
                 Hi, I'm Stella, an AI assistant 👋
               </Typography>
+
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -291,14 +334,18 @@ function FloatingAI() {
                   event.stopPropagation();
                   dismissBubble();
                 }}
-                sx={{ position: "absolute", top: 6, right: 6 }}
+                sx={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                }}
               >
                 <CloseRoundedIcon fontSize="small" />
               </IconButton>
             </Paper>
           )}
 
-          {/* Avatar + label pill, one big click target */}
+          {/* Avatar + label pill */}
           <ButtonBase
             onClick={openChat}
             aria-label="Open Stella, your AI school assistant"
@@ -320,8 +367,12 @@ function FloatingAI() {
                 animation: "stellaFloat 3s ease-in-out infinite",
                 filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.18))",
                 "@keyframes stellaFloat": {
-                  "0%, 100%": { transform: "translateY(0)" },
-                  "50%": { transform: "translateY(-10px)" },
+                  "0%, 100%": {
+                    transform: "translateY(0)",
+                  },
+                  "50%": {
+                    transform: "translateY(-10px)",
+                  },
                 },
                 "@media (prefers-reduced-motion: reduce)": {
                   animation: "none",
@@ -338,9 +389,9 @@ function FloatingAI() {
 
             <Stack
               direction="row"
-              alignItems="center"
               spacing={1}
               sx={{
+                alignItems: "center",
                 mt: -1.5,
                 pl: 1.5,
                 pr: 0.75,
@@ -350,7 +401,9 @@ function FloatingAI() {
                 color: "primary.contrastText",
                 boxShadow: 6,
                 transition: "transform 0.2s",
-                "&:hover": { transform: "scale(1.04)" },
+                "&:hover": {
+                  transform: "scale(1.04)",
+                },
               }}
             >
               <Box
@@ -361,17 +414,23 @@ function FloatingAI() {
                   bgcolor: "#86EFAC",
                   animation: "stellaPulse 2s ease-out infinite",
                   "@keyframes stellaPulse": {
-                    "0%": { boxShadow: "0 0 0 0 rgba(134,239,172,0.7)" },
-                    "70%, 100%": { boxShadow: "0 0 0 8px rgba(134,239,172,0)" },
+                    "0%": {
+                      boxShadow: "0 0 0 0 rgba(134,239,172,0.7)",
+                    },
+                    "70%, 100%": {
+                      boxShadow: "0 0 0 8px rgba(134,239,172,0)",
+                    },
                   },
                   "@media (prefers-reduced-motion: reduce)": {
                     animation: "none",
                   },
                 }}
               />
+
               <Typography variant="body2" fontWeight={800}>
                 Ask Stella
               </Typography>
+
               <Box
                 sx={{
                   px: 0.9,
@@ -392,12 +451,14 @@ function FloatingAI() {
     );
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Open state: chat window                                             */
-  /* ------------------------------------------------------------------ */
+  /* --------------------------------------------------
+     Open state: chat window
+  -------------------------------------------------- */
+
   return (
     <>
       <StellaFaceCapture />
+
       <Paper
         elevation={16}
         role="dialog"
@@ -419,12 +480,12 @@ function FloatingAI() {
           bgcolor: "background.paper",
         }}
       >
-        {/* Header: the one live 3D Stella */}
+        {/* Header */}
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1.5}
           sx={{
+            alignItems: "center",
             pl: 1.5,
             pr: 1,
             py: 1,
@@ -454,10 +515,11 @@ function FloatingAI() {
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
               <Typography fontWeight={800} fontSize={18}>
                 Stella
               </Typography>
+
               <Box
                 sx={{
                   px: 0.8,
@@ -472,7 +534,7 @@ function FloatingAI() {
               </Box>
             </Stack>
 
-            <Stack direction="row" alignItems="center" spacing={0.75}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
               <Box
                 sx={{
                   width: 7,
@@ -481,6 +543,7 @@ function FloatingAI() {
                   bgcolor: "#86EFAC",
                 }}
               />
+
               <Typography variant="caption" sx={{ opacity: 0.92 }}>
                 {loading ? "Thinking…" : "AI school assistant · online"}
               </Typography>
@@ -565,21 +628,25 @@ function FloatingAI() {
                           {children}
                         </Typography>
                       ),
+
                       strong: ({ children }) => (
                         <Box component="strong" sx={{ fontWeight: 800 }}>
                           {children}
                         </Box>
                       ),
+
                       ul: ({ children }) => (
                         <Box component="ul" sx={{ pl: 2.5, my: 1 }}>
                           {children}
                         </Box>
                       ),
+
                       ol: ({ children }) => (
                         <Box component="ol" sx={{ pl: 2.5, my: 1 }}>
                           {children}
                         </Box>
                       ),
+
                       li: ({ children }) => (
                         <Box component="li" sx={{ mb: 0.5 }}>
                           <Typography variant="body2" component="span">
@@ -596,13 +663,20 @@ function FloatingAI() {
             );
           })}
 
-          {/* Suggestions: shown until the first question is asked */}
+          {/* Suggestions */}
           {isFreshChat && !loading && (
             <Stack spacing={1} sx={{ pl: 5.5 }}>
               <Typography variant="caption" color="text.secondary">
                 Try asking:
               </Typography>
-              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+
+              <Stack
+                direction="row"
+                sx={{
+                  flexWrap: "wrap",
+                  gap: 1,
+                }}
+              >
                 <Chip
                   icon={<MenuBookRoundedIcon />}
                   label="Summarize my homework"
@@ -611,6 +685,7 @@ function FloatingAI() {
                   variant="outlined"
                   clickable
                 />
+
                 {SUGGESTIONS.map((suggestion) => (
                   <Chip
                     key={suggestion.label}
@@ -628,8 +703,9 @@ function FloatingAI() {
 
           {/* Thinking indicator */}
           {loading && (
-            <Stack direction="row" alignItems="flex-end" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "flex-end" }}>
               <StellaBadge />
+
               <Paper
                 variant="outlined"
                 sx={{
@@ -667,7 +743,7 @@ function FloatingAI() {
             bgcolor: "background.paper",
           }}
         >
-          <Stack direction="row" alignItems="flex-end" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-end" }}>
             <TextField
               fullWidth
               multiline
@@ -689,8 +765,12 @@ function FloatingAI() {
                 height: 42,
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
-                "&:hover": { bgcolor: "primary.dark" },
-                "&.Mui-disabled": { bgcolor: "action.disabledBackground" },
+                "&:hover": {
+                  bgcolor: "primary.dark",
+                },
+                "&.Mui-disabled": {
+                  bgcolor: "action.disabledBackground",
+                },
               }}
             >
               <SendRoundedIcon />
@@ -700,7 +780,11 @@ function FloatingAI() {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: "block", mt: 1, textAlign: "center" }}
+            sx={{
+              display: "block",
+              mt: 1,
+              textAlign: "center",
+            }}
           >
             Stella is an AI and can make mistakes. Verify important information.
           </Typography>

@@ -174,50 +174,55 @@ function StudentHomework() {
 
   const fileInputRef = useRef(null);
 
+  // Fetch homework and submission data without updating component state.
+  async function fetchHomeworkData() {
+    const [homeworkResponse, submissionsResponse] = await Promise.all([
+      api.get("/homework/student"),
+      api.get("/submissions/student"),
+    ]);
+
+    const assignments = homeworkResponse.data.homework || [];
+    const submissions = submissionsResponse.data.submissions || [];
+
+    // Match actual submissions with their homework assignments.
+    const submissionMap = new Map();
+
+    submissions.forEach((submission) => {
+      const homeworkId =
+        typeof submission.homework === "object"
+          ? submission.homework?._id
+          : submission.homework;
+
+      if (!homeworkId) return;
+
+      const attempts = submission.attempts || [];
+      const latestAttempt = attempts[attempts.length - 1] || null;
+
+      submissionMap.set(String(homeworkId), {
+        ...submission,
+        latestAttempt,
+      });
+    });
+
+    return assignments.map((task) => {
+      const submission = submissionMap.get(String(task._id)) || null;
+
+      return {
+        ...task,
+        submission,
+        latestAttempt: submission?.latestAttempt || null,
+        submissionStatus: submission?.latestAttempt?.status || "pending",
+      };
+    });
+  }
+
+  // Used by the refresh button and after a successful submission.
   async function fetchHomework() {
     try {
       setLoading(true);
       setError("");
 
-      const [homeworkResponse, submissionsResponse] = await Promise.all([
-        api.get("/homework/student"),
-        api.get("/submissions/student"),
-      ]);
-
-      const assignments = homeworkResponse.data.homework || [];
-      const submissions = submissionsResponse.data.submissions || [];
-
-      // Match actual submissions with their homework assignments.
-      const submissionMap = new Map();
-
-      submissions.forEach((submission) => {
-        const homeworkId =
-          typeof submission.homework === "object"
-            ? submission.homework?._id
-            : submission.homework;
-
-        if (!homeworkId) return;
-
-        const attempts = submission.attempts || [];
-        const latestAttempt = attempts[attempts.length - 1] || null;
-
-        submissionMap.set(String(homeworkId), {
-          ...submission,
-          latestAttempt,
-        });
-      });
-
-      const updatedAssignments = assignments.map((task) => {
-        const submission = submissionMap.get(String(task._id)) || null;
-
-        return {
-          ...task,
-          submission,
-          latestAttempt: submission?.latestAttempt || null,
-          submissionStatus: submission?.latestAttempt?.status || "pending",
-        };
-      });
-
+      const updatedAssignments = await fetchHomeworkData();
       setHomework(updatedAssignments);
     } catch (err) {
       setError(
@@ -229,8 +234,34 @@ function StudentHomework() {
     }
   }
 
+  // Initial homework fetch.
   useEffect(() => {
-    fetchHomework();
+    let isActive = true;
+
+    fetchHomeworkData()
+      .then((updatedAssignments) => {
+        if (!isActive) return;
+
+        setHomework(updatedAssignments);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load homework and submission information.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const tasks = useMemo(

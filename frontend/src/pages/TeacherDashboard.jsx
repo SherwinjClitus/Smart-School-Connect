@@ -126,7 +126,7 @@ function TeacherDashboard() {
             "Some dashboard information could not be loaded. Please try refreshing.",
           );
         }
-      } catch (err) {
+      } catch {
         setError("Unable to load your dashboard. Please try again.");
       } finally {
         setLoading(false);

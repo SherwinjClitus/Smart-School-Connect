@@ -142,21 +142,19 @@ function ParentDashboard() {
     fetchDashboardData();
   }, []);
 
-  // Keep the selected child valid if the list changes (e.g. child unlinked)
-  useEffect(() => {
-    if (
-      selectedChild !== "all" &&
-      !children.some((item) => getChildId(item) === selectedChild)
-    ) {
-      setSelectedChild("all");
-    }
-  }, [children, selectedChild]);
+  const effectiveSelectedChild =
+    selectedChild === "all" ||
+    children.some((item) => getChildId(item) === selectedChild)
+      ? selectedChild
+      : "all";
 
   const visibleChildren = useMemo(() => {
-    if (selectedChild === "all") return children;
+    if (effectiveSelectedChild === "all") return children;
 
-    return children.filter((item) => getChildId(item) === selectedChild);
-  }, [children, selectedChild]);
+    return children.filter(
+      (item) => getChildId(item) === effectiveSelectedChild,
+    );
+  }, [children, effectiveSelectedChild]);
 
   const allHomework = useMemo(
     () =>
@@ -225,7 +223,7 @@ function ParentDashboard() {
   );
 
   const selectedChildName =
-    selectedChild === "all"
+    effectiveSelectedChild === "all"
       ? "All Children"
       : visibleChildren[0]?.child?.name || "Selected Child";
 
@@ -328,7 +326,7 @@ function ParentDashboard() {
 
               <Select
                 labelId="dashboard-child-label"
-                value={selectedChild}
+                value={effectiveSelectedChild}
                 label="Viewing"
                 onChange={(event) => setSelectedChild(event.target.value)}
               >
@@ -577,7 +575,7 @@ function ParentDashboard() {
                 <Stack direction="row" sx={sectionHeaderSx}>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={sectionTitleSx}>
-                      {selectedChild === "all"
+                      {effectiveSelectedChild === "all"
                         ? "Children's Progress"
                         : `${selectedChildName}'s Progress`}
                     </Typography>

@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -32,20 +33,26 @@ const categoryLabels = {
   general_update: "General Update",
 };
 
+// Fetch announcements without directly updating component state.
+async function fetchAnnouncementsData() {
+  const response = await api.get("/messages/student");
+  return response.data.messages || [];
+}
+
 function StudentAnnouncements() {
   const [announcements, setAnnouncements] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Used by the refresh button.
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await api.get("/messages/student");
-
-      setAnnouncements(response.data.messages || []);
+      const data = await fetchAnnouncementsData();
+      setAnnouncements(data);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -56,8 +63,34 @@ function StudentAnnouncements() {
     }
   };
 
+  // Initial announcements fetch.
   useEffect(() => {
-    fetchAnnouncements();
+    let isActive = true;
+
+    fetchAnnouncementsData()
+      .then((data) => {
+        if (!isActive) return;
+
+        setAnnouncements(data);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load announcements. Please try again.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const filteredAnnouncements = useMemo(() => {

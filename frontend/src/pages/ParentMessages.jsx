@@ -23,6 +23,12 @@ const categoryLabels = {
   general_update: "General Update",
 };
 
+// Fetch data separately from React state updates.
+async function fetchParentMessages() {
+  const response = await api.get("/messages/parent");
+  return response.data.messages || [];
+}
+
 const announcementCardSx = {
   border: 1,
   borderColor: "divider",
@@ -38,26 +44,33 @@ function ParentMessages() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    loadMessages();
+    let isActive = true;
+
+    fetchParentMessages()
+      .then((receivedMessages) => {
+        if (!isActive) return;
+
+        setMessages(receivedMessages);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Failed to load announcements. Please try again.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
-
-  const loadMessages = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get("/messages/parent");
-
-      setMessages(response.data.messages || []);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to load announcements. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (date) => {
     if (!date) return "Date unavailable";

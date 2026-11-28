@@ -433,7 +433,11 @@ function TeacherHomework() {
                   onChange={(e) => setTitle(e.target.value)}
                   fullWidth
                   required
-                  inputProps={{ maxLength: 150 }}
+                  slotProps={{
+                    htmlInput: {
+                      maxLength: 150,
+                    },
+                  }}
                 />
 
                 <TextField
@@ -445,7 +449,11 @@ function TeacherHomework() {
                   minRows={4}
                   fullWidth
                   required
-                  inputProps={{ maxLength: 5000 }}
+                  slotProps={{
+                    htmlInput: {
+                      maxLength: 5000,
+                    },
+                  }}
                   helperText={`${description.length}/5000 characters`}
                 />
 

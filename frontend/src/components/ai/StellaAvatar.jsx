@@ -1,7 +1,13 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
+
+import {
+  getCachedFace,
+  publishStellaFace,
+  subscribeToStellaFace,
+} from "./stellaFaceStore";
 
 function StellaModel({ animation, scale }) {
   const { scene, animations } = useGLTF("/models/agente-stella.glb");
@@ -55,73 +61,49 @@ function StellaAvatar({
 }
 
 /* ------------------------------------------------------------------ */
-/* One-time snapshot of Stella, used as a flat image beside messages.  */
-/* A hidden 3D canvas renders her once, saves a PNG, then removes      */
-/* itself. Every small avatar reuses that same PNG, so the page never  */
-/* needs more than one extra WebGL context, and only for a moment.     */
+/* One-time snapshot of Stella, used as a flat image beside messages. */
 /* ------------------------------------------------------------------ */
-
-let cachedFace = null;
-const listeners = new Set();
 
 function FaceCapture() {
   const { gl, scene, camera } = useThree();
   const frames = useRef(0);
 
   useFrame(() => {
-    if (cachedFace) return;
+    if (getCachedFace()) return;
 
     frames.current += 1;
 
-    // Give the model a moment to load and settle, and stop trying after a while
+    // Give the model time to load and settle
     if (frames.current < 40 || frames.current > 400) return;
 
-    // Draw once more right now so the canvas definitely holds Stella
+    // Render Stella into the canvas
     gl.render(scene, camera);
+
     const picture = gl.domElement.toDataURL("image/png");
 
-    // If the canvas is still empty, try again on the next frame
+    // Check whether the canvas is empty
     const empty = document.createElement("canvas");
     empty.width = gl.domElement.width;
     empty.height = gl.domElement.height;
+
     if (picture === empty.toDataURL("image/png")) return;
 
-    cachedFace = picture;
-    listeners.forEach((listener) => listener(cachedFace));
+    // Save the snapshot and notify subscribers
+    publishStellaFace(picture);
   });
 
   return null;
 }
 
-export function useStellaFace() {
-  const [face, setFace] = useState(cachedFace);
-
-  useEffect(() => {
-    if (cachedFace) {
-      setFace(cachedFace);
-      return;
-    }
-
-    listeners.add(setFace);
-    return () => listeners.delete(setFace);
-  }, []);
-
-  return face;
-}
-
-// Mount this once anywhere. It renders nothing after the snapshot is taken.
+// Mount this once anywhere. It disappears after capturing Stella.
 export function StellaFaceCapture() {
-  const [done, setDone] = useState(Boolean(cachedFace));
+  const face = useSyncExternalStore(
+    subscribeToStellaFace,
+    getCachedFace,
+    getCachedFace,
+  );
 
-  useEffect(() => {
-    if (done) return;
-
-    const onCaptured = () => setDone(true);
-    listeners.add(onCaptured);
-    return () => listeners.delete(onCaptured);
-  }, [done]);
-
-  if (done) return null;
+  if (face) return null;
 
   return (
     <div
@@ -139,7 +121,11 @@ export function StellaFaceCapture() {
     >
       <Canvas
         camera={{ position: [0, 0, 7], fov: 40, near: 0.1, far: 100 }}
-        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+        gl={{
+          alpha: true,
+          antialias: true,
+          preserveDrawingBuffer: true,
+        }}
       >
         <ambientLight intensity={1.5} />
         <directionalLight position={[2, 3, 4]} intensity={2} />

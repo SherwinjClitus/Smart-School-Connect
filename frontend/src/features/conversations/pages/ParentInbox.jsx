@@ -98,6 +98,9 @@ function formatDate(date) {
     timeStyle: "short",
   });
 }
+async function fetchParentConversations() {
+  return conversationService.getMyConversations();
+}
 
 function ParentInbox() {
   const navigate = useNavigate();
@@ -129,7 +132,32 @@ function ParentInbox() {
   };
 
   useEffect(() => {
-    loadConversations();
+    let isActive = true;
+
+    fetchParentConversations()
+      .then((data) => {
+        if (!isActive) return;
+
+        setConversations(data.conversations || []);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load your conversations. Please try again.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const stats = useMemo(

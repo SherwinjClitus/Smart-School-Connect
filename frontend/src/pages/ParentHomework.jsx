@@ -25,7 +25,6 @@ import {
 import { alpha } from "@mui/material/styles";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
@@ -209,77 +208,88 @@ function ParentHomework() {
   const [viewingFileId, setViewingFileId] = useState(null);
   const [fileViewError, setFileViewError] = useState("");
 
-  // Fetch homework and submissions for every linked child
-  const fetchChildrenHomework = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  // Fetch homework and submissions for every linked child.
+  // This helper returns data; the effect below owns the component state updates.
+  const fetchChildrenHomeworkData = async () => {
+    const response = await api.get("/homework/parent");
+    const receivedChildren = response.data.children || [];
 
-      const response = await api.get("/homework/parent");
-      const receivedChildren = response.data.children || [];
+    const childrenWithSubmissions = await Promise.all(
+      receivedChildren.map(async (item) => {
+        const childId = getChildId(item);
 
-      const childrenWithSubmissions = await Promise.all(
-        receivedChildren.map(async (item) => {
-          const childId = getChildId(item);
+        if (!childId) return item;
 
-          if (!childId) return item;
+        const submissionResponse = await api.get(
+          `/submissions/parent/${childId}`,
+        );
 
-          const submissionResponse = await api.get(
-            `/submissions/parent/${childId}`,
+        const submissions = Array.isArray(submissionResponse.data)
+          ? submissionResponse.data
+          : submissionResponse.data.submissions || [];
+
+        const submissionMap = new Map();
+
+        submissions.forEach((submission) => {
+          const homeworkId = String(
+            submission.homework?._id || submission.homework || "",
           );
 
-          const submissions = Array.isArray(submissionResponse.data)
-            ? submissionResponse.data
-            : submissionResponse.data.submissions || [];
+          if (!homeworkId) return;
 
-          const submissionMap = new Map();
-
-          submissions.forEach((submission) => {
-            const homeworkId = String(
-              submission.homework?._id || submission.homework || "",
-            );
-
-            if (!homeworkId) return;
-
-            submissionMap.set(homeworkId, {
-              ...submission,
-              latestAttempt: getLatestAttempt(submission),
-            });
+          submissionMap.set(homeworkId, {
+            ...submission,
+            latestAttempt: getLatestAttempt(submission),
           });
+        });
 
-          return {
-            ...item,
-            homework: (item.homework || []).map((task) => ({
-              ...task,
-              submission: submissionMap.get(String(task._id)) || null,
-            })),
-          };
-        }),
-      );
+        return {
+          ...item,
+          homework: (item.homework || []).map((task) => ({
+            ...task,
+            submission: submissionMap.get(String(task._id)) || null,
+          })),
+        };
+      }),
+    );
 
-      setChildren(childrenWithSubmissions);
-
-      if (
-        selectedChild !== "all" &&
-        !childrenWithSubmissions.some(
-          (item) => getChildId(item) === selectedChild,
-        )
-      ) {
-        setSelectedChild("all");
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to load children's homework and submissions.",
-      );
-    } finally {
-      setLoading(false);
-    }
+    return childrenWithSubmissions;
   };
 
   useEffect(() => {
-    fetchChildrenHomework();
+    let isActive = true;
+
+    fetchChildrenHomeworkData()
+      .then((receivedChildren) => {
+        if (!isActive) return;
+
+        setChildren(receivedChildren);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load children's homework and submissions.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
+
+  const effectiveSelectedChild =
+    selectedChild === "all" ||
+    children.some((item) => getChildId(item) === selectedChild)
+      ? selectedChild
+      : "all";
 
   const allHomework = useMemo(
     () =>
@@ -300,7 +310,8 @@ function ParentHomework() {
     return allHomework
       .filter((task) => {
         const matchesChild =
-          selectedChild === "all" || task.studentId === selectedChild;
+          effectiveSelectedChild === "all" ||
+          task.studentId === effectiveSelectedChild;
 
         const matchesFilter =
           filter === "all" ||
@@ -340,7 +351,7 @@ function ParentHomework() {
           new Date(b.dueDate || "9999-12-31")
         );
       });
-  }, [allHomework, selectedChild, filter, search]);
+  }, [allHomework, effectiveSelectedChild, filter, search]);
 
   const stats = useMemo(
     () => ({
@@ -364,10 +375,11 @@ function ParentHomework() {
   );
 
   const selectedChildName =
-    selectedChild === "all"
+    effectiveSelectedChild === "all"
       ? "All Children"
-      : children.find((item) => getChildId(item) === selectedChild)?.child
-          ?.name || "Selected Child";
+      : children.find(
+          (item) => getChildId(item) === effectiveSelectedChild,
+        )?.child?.name || "Selected Child";
 
   const filters = [
     { value: "all", label: "All", count: stats.total },

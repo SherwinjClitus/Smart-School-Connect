@@ -15,18 +15,18 @@ import Brightness4OutlinedIcon from "@mui/icons-material/Brightness4Outlined";
 import Brightness7OutlinedIcon from "@mui/icons-material/Brightness7Outlined";
 
 import LogoutButton from "../common/LogoutButton";
-import { useAppTheme } from "../../context/ThemeContext";
+import { useAppTheme } from "../../context/useAppTheme";
 
 function Topbar({ onMenuClick, title }) {
   const { mode, toggleTheme } = useAppTheme();
 
-  let user = null;
-
-  try {
-    user = JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    user = null;
-  }
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
 
   const initials = user?.name
     ? user.name
@@ -70,7 +70,14 @@ function Topbar({ onMenuClick, title }) {
         }}
       >
         {/* Left Section */}
-        <Stack direction="row" alignItems="center" spacing={1.5} minWidth={0}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{
+            alignItems: "center",
+            minWidth: 0,
+          }}
+        >
           <IconButton
             onClick={onMenuClick}
             aria-label="Open navigation menu"
@@ -82,7 +89,7 @@ function Topbar({ onMenuClick, title }) {
             <MenuIcon />
           </IconButton>
 
-          <Box minWidth={0}>
+          <Box sx={{ minWidth: 0 }}>
             <Typography
               variant="h6"
               fontWeight={800}
@@ -110,7 +117,11 @@ function Topbar({ onMenuClick, title }) {
         </Stack>
 
         {/* Right Section */}
-        <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
+        <Stack
+          direction="row"
+          spacing={{ xs: 1, sm: 2 }}
+          sx={{ alignItems: "center" }}
+        >
           {/* Dark / Light Mode Toggle */}
           <Tooltip
             title={
@@ -147,7 +158,7 @@ function Topbar({ onMenuClick, title }) {
           </Tooltip>
 
           {/* User Information */}
-          <Stack direction="row" alignItems="center" spacing={1.2}>
+          <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
             <Avatar
               sx={{
                 width: 38,

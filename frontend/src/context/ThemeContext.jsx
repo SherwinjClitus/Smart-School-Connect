@@ -1,8 +1,9 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { ThemeContext } from "./themeStore";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
-const ThemeContext = createContext(null);
+
 
 export function AppThemeProvider({ children }) {
   const [mode, setMode] = useState(() => {
@@ -91,14 +92,4 @@ export function AppThemeProvider({ children }) {
       </ThemeProvider>
     </ThemeContext.Provider>
   );
-}
-
-export function useAppTheme() {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    throw new Error("useAppTheme must be used inside AppThemeProvider");
-  }
-
-  return context;
 }

@@ -33,6 +33,12 @@ import {
 import DashboardLayout from "../components/layout/DashboardLayout";
 import api from "../services/api";
 
+// Retrieve submission data without updating component state.
+async function fetchSubmissionsData(homeworkId) {
+  const response = await api.get(`/submissions/homework/${homeworkId}`);
+  return response.data;
+}
+
 function TeacherHomeworkSubmissions() {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -54,15 +60,14 @@ function TeacherHomeworkSubmissions() {
   const [viewingFileId, setViewingFileId] = useState(null);
   const [fileViewError, setFileViewError] = useState("");
 
-  // Fetch student submissions
+  // Fetch student submissions for manual refresh and after a review.
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await api.get(`/submissions/homework/${homeworkId}`);
-
-      setData(response.data);
+      const submissionData = await fetchSubmissionsData(homeworkId);
+      setData(submissionData);
     } catch (err) {
       setError(
         err.response?.data?.message || "Unable to load student submissions.",
@@ -72,8 +77,33 @@ function TeacherHomeworkSubmissions() {
     }
   };
 
+  // Load submissions whenever the homework ID changes.
   useEffect(() => {
-    fetchSubmissions();
+    let isActive = true;
+
+    fetchSubmissionsData(homeworkId)
+      .then((submissionData) => {
+        if (!isActive) return;
+
+        setData(submissionData);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message || "Unable to load student submissions.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, [homeworkId]);
 
   const students = data?.students || [];

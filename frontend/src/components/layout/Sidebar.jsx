@@ -94,13 +94,13 @@ function Sidebar({ mobileOpen, onClose }) {
   const isDark = theme.palette.mode === "dark";
   const isDesktop = useMediaQuery("(min-width:900px)");
 
-  let user = null;
-
-  try {
-    user = JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    user = null;
-  }
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
 
   const role = user?.role || "student";
   const links = roleLinks[role] || [];
@@ -191,7 +191,6 @@ function Sidebar({ mobileOpen, onClose }) {
 
                   "&.Mui-selected": {
                     bgcolor: isDark ? "rgba(96, 165, 250, 0.15)" : "#EAF2FF",
-
                     color: "primary.main",
 
                     "& .MuiListItemIcon-root": {

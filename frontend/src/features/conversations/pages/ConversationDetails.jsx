@@ -70,6 +70,21 @@ function formatDate(date) {
     timeStyle: "short",
   });
 }
+async function fetchConversationData(conversationId) {
+  const [conversationData, messageData] = await Promise.all([
+    conversationService.getMyConversations(),
+    conversationService.getConversationMessages(conversationId),
+  ]);
+
+  const currentConversation = (conversationData.conversations || []).find(
+    (item) => String(item._id || item.id) === String(conversationId),
+  );
+
+  return {
+    currentConversation,
+    messages: messageData.messages || [],
+  };
+}
 
 function ConversationDetails() {
   const { conversationId } = useParams();
@@ -137,14 +152,8 @@ function ConversationDetails() {
       setLoading(true);
       setError("");
 
-      const [conversationData, messageData] = await Promise.all([
-        conversationService.getMyConversations(),
-        conversationService.getConversationMessages(conversationId),
-      ]);
-
-      const currentConversation = (conversationData.conversations || []).find(
-        (item) => String(item._id || item.id) === String(conversationId),
-      );
+      const { currentConversation, messages: loadedMessages } =
+        await fetchConversationData(conversationId);
 
       if (!currentConversation) {
         setConversation(null);
@@ -154,7 +163,7 @@ function ConversationDetails() {
       }
 
       setConversation(currentConversation);
-      setMessages(messageData.messages || []);
+      setMessages(loadedMessages);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -166,9 +175,41 @@ function ConversationDetails() {
   };
 
   useEffect(() => {
-    loadConversation();
-  }, [conversationId]);
+    let isActive = true;
 
+    fetchConversationData(conversationId)
+      .then(({ currentConversation, messages: loadedMessages }) => {
+        if (!isActive) return;
+
+        if (!currentConversation) {
+          setConversation(null);
+          setMessages([]);
+          setError("Conversation not found or access denied.");
+          return;
+        }
+
+        setConversation(currentConversation);
+        setMessages(loadedMessages);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load conversation. Please try again.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [conversationId]);
   // Send a reply
   const handleSendMessage = async (event) => {
     event.preventDefault();

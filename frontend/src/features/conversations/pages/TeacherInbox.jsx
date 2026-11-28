@@ -104,6 +104,9 @@ function formatDate(date) {
 
   return parsedDate.toLocaleString();
 }
+async function fetchTeacherConversations() {
+  return conversationService.getMyConversations();
+}
 
 function TeacherInbox() {
   const navigate = useNavigate();
@@ -167,7 +170,32 @@ function TeacherInbox() {
   };
 
   useEffect(() => {
-    loadConversations();
+    let isActive = true;
+
+    fetchTeacherConversations()
+      .then((data) => {
+        if (!isActive) return;
+
+        setConversations(data.conversations || []);
+        setError("");
+      })
+      .catch((err) => {
+        if (!isActive) return;
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load conversations. Please try again.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   // Conversation statistics
