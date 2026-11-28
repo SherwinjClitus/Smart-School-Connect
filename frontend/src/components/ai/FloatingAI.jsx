@@ -362,8 +362,8 @@ function FloatingAI() {
           >
             <Box
               sx={{
-                width: { xs: 130, sm: 160 },
-                height: { xs: 130, sm: 160 },
+                width: { xs: 100, sm: 120 },
+                height: { xs: 100, sm: 120 },
                 animation: "stellaFloat 3s ease-in-out infinite",
                 filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.18))",
                 "@keyframes stellaFloat": {
