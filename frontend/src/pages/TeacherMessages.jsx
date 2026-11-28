@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
 import api from "../services/api";
 import DashboardLayout from "../components/layout/DashboardLayout";
@@ -46,7 +47,10 @@ function TeacherMessages() {
 
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [improving, setImproving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [aiStyle, setAiStyle] = useState("professional");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -77,6 +81,7 @@ function TeacherMessages() {
     },
   };
 
+  // Load classes and previously sent announcements
   const loadPageData = async () => {
     try {
       setLoading(true);
@@ -102,6 +107,45 @@ function TeacherMessages() {
     loadPageData();
   }, []);
 
+  // Improve announcement using Nemotron
+  const handleImproveMessage = async () => {
+    if (!content.trim()) {
+      setError("Please write an announcement before using AI.");
+      return;
+    }
+
+    try {
+      setImproving(true);
+      setError("");
+      setSuccess("");
+
+      const response = await api.post("/ai/improve-message", {
+        content: content.trim(),
+        provider: "nemotron",
+        style: aiStyle,
+      });
+
+      if (!response.data.improvedContent) {
+        throw new Error("AI did not return improved content.");
+      }
+
+      setContent(response.data.improvedContent);
+
+      setSuccess(
+        "AI improved your announcement. Please review and edit it before sending.",
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to improve your announcement. Please try again.",
+      );
+    } finally {
+      setImproving(false);
+    }
+  };
+
+  // Open announcement preview
   const handlePreview = () => {
     setError("");
     setSuccess("");
@@ -116,6 +160,7 @@ function TeacherMessages() {
     setPreviewOpen(true);
   };
 
+  // Send announcement using the existing backend API
   const handleSend = async () => {
     try {
       setSending(true);
@@ -135,6 +180,7 @@ function TeacherMessages() {
 
       setSubject("");
       setContent("");
+      setAiStyle("professional");
       setPreviewOpen(false);
 
       await loadPageData();
@@ -218,6 +264,7 @@ function TeacherMessages() {
             </Typography>
 
             <Stack spacing={2.5}>
+              {/* Select Class */}
               <TextField
                 select
                 fullWidth
@@ -245,6 +292,7 @@ function TeacherMessages() {
                 ))}
               </TextField>
 
+              {/* Announcement Category */}
               <TextField
                 select
                 fullWidth
@@ -272,6 +320,7 @@ function TeacherMessages() {
                 ))}
               </TextField>
 
+              {/* Subject */}
               <TextField
                 fullWidth
                 label="Subject"
@@ -280,6 +329,7 @@ function TeacherMessages() {
                 sx={fieldSx}
               />
 
+              {/* Announcement Content */}
               <TextField
                 fullWidth
                 multiline
@@ -296,11 +346,105 @@ function TeacherMessages() {
                 sx={fieldSx}
               />
 
+              {/* AI Writing Assistant */}
+              <Box
+                sx={{
+                  p: 2,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "action.hover",
+                }}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                  justifyContent="space-between"
+                >
+                  <Box>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      mb={0.5}
+                    >
+                      <AutoAwesomeRoundedIcon
+                        color="primary"
+                        fontSize="small"
+                      />
+
+                      <Typography fontWeight={700}>
+                        AI Writing Assistant
+                      </Typography>
+
+                      <Chip
+                        label="Nemotron"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Stack>
+
+                    <Typography variant="caption" color="text.secondary">
+                      Improve grammar, clarity and tone while preserving your
+                      original meaning.
+                    </Typography>
+                  </Box>
+
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    <TextField
+                      select
+                      size="small"
+                      label="Writing Style"
+                      value={aiStyle}
+                      onChange={(e) => setAiStyle(e.target.value)}
+                      sx={{
+                        ...fieldSx,
+                        minWidth: 170,
+                      }}
+                    >
+                      <MenuItem value="professional">Professional</MenuItem>
+
+                      <MenuItem value="friendly">Friendly</MenuItem>
+
+                      <MenuItem value="concise">Concise</MenuItem>
+
+                      <MenuItem value="detailed">Detailed</MenuItem>
+
+                      <MenuItem value="grammar">Grammar Correction</MenuItem>
+                    </TextField>
+
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      startIcon={
+                        improving ? (
+                          <CircularProgress size={17} />
+                        ) : (
+                          <AutoAwesomeRoundedIcon />
+                        )
+                      }
+                      onClick={handleImproveMessage}
+                      disabled={improving || sending || !content.trim()}
+                      sx={{
+                        whiteSpace: "nowrap",
+                        minHeight: 40,
+                      }}
+                    >
+                      {improving ? "Improving..." : "Improve with AI"}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
+
+              {/* Preview Button */}
               <Box display="flex" justifyContent="flex-end">
                 <Button
                   variant="contained"
                   size="large"
                   onClick={handlePreview}
+                  disabled={improving || sending}
                 >
                   Preview Announcement
                 </Button>
@@ -380,7 +524,7 @@ function TeacherMessages() {
         {/* Preview Dialog */}
         <Dialog
           open={previewOpen}
-          onClose={() => setPreviewOpen(false)}
+          onClose={() => !sending && setPreviewOpen(false)}
           fullWidth
           maxWidth="sm"
           PaperProps={{
@@ -429,11 +573,15 @@ function TeacherMessages() {
           </DialogContent>
 
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setPreviewOpen(false)}>
+            <Button onClick={() => setPreviewOpen(false)} disabled={sending}>
               Edit Announcement
             </Button>
 
-            <Button variant="contained" onClick={handleSend} disabled={sending}>
+            <Button
+              variant="contained"
+              onClick={handleSend}
+              disabled={sending || improving}
+            >
               {sending ? "Sending..." : "Confirm & Send"}
             </Button>
           </DialogActions>

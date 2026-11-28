@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import FloatingAI from "../ai/FloatingAI";
 
 function DashboardLayout({ children, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -17,10 +18,8 @@ function DashboardLayout({ children, title }) {
         transition: "background-color 0.2s ease, color 0.2s ease",
       }}
     >
-      {/* Sidebar */}
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
@@ -29,10 +28,8 @@ function DashboardLayout({ children, title }) {
           transition: "background-color 0.2s ease",
         }}
       >
-        {/* Topbar */}
         <Topbar title={title} onMenuClick={() => setMobileOpen(true)} />
 
-        {/* Page Content */}
         <Box
           component="main"
           sx={{
@@ -49,6 +46,9 @@ function DashboardLayout({ children, title }) {
           {children}
         </Box>
       </Box>
+
+      {/* Floating AI assistant */}
+      <FloatingAI />
     </Box>
   );
 }
