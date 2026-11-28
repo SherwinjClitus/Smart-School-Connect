@@ -81,6 +81,15 @@ function TeacherMessages() {
     },
   };
 
+  const menuProps = {
+    PaperProps: {
+      sx: {
+        bgcolor: "background.paper",
+        color: "text.primary",
+      },
+    },
+  };
+
   // Load classes and previously sent announcements
   const loadPageData = async () => {
     try {
@@ -272,18 +281,7 @@ function TeacherMessages() {
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
                 sx={fieldSx}
-                slotProps={{
-                  select: {
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          bgcolor: "background.paper",
-                          color: "text.primary",
-                        },
-                      },
-                    },
-                  },
-                }}
+                slotProps={{ select: { MenuProps: menuProps } }}
               >
                 {classes.map((schoolClass) => (
                   <MenuItem key={schoolClass._id} value={schoolClass._id}>
@@ -300,18 +298,7 @@ function TeacherMessages() {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 sx={fieldSx}
-                slotProps={{
-                  select: {
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          bgcolor: "background.paper",
-                          color: "text.primary",
-                        },
-                      },
-                    },
-                  },
-                }}
+                slotProps={{ select: { MenuProps: menuProps } }}
               >
                 {categories.map((item) => (
                   <MenuItem key={item.value} value={item.value}>
@@ -356,17 +343,20 @@ function TeacherMessages() {
                   bgcolor: "action.hover",
                 }}
               >
+                {/* Row on wide cards, column on narrow ones */}
                 <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1.5}
-                  alignItems={{ xs: "stretch", sm: "center" }}
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2}
+                  alignItems={{ xs: "stretch", md: "center" }}
                   justifyContent="space-between"
                 >
-                  <Box>
+                  <Box sx={{ minWidth: 0 }}>
                     <Stack
                       direction="row"
                       spacing={1}
                       alignItems="center"
+                      flexWrap="wrap"
+                      useFlexGap
                       mb={0.5}
                     >
                       <AutoAwesomeRoundedIcon
@@ -392,7 +382,13 @@ function TeacherMessages() {
                     </Typography>
                   </Box>
 
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  {/* Controls: style select + improve button */}
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ flexShrink: 0 }}
+                  >
                     <TextField
                       select
                       size="small"
@@ -403,21 +399,19 @@ function TeacherMessages() {
                         ...fieldSx,
                         minWidth: 170,
                       }}
+                      slotProps={{ select: { MenuProps: menuProps } }}
                     >
                       <MenuItem value="professional">Professional</MenuItem>
-
                       <MenuItem value="friendly">Friendly</MenuItem>
-
                       <MenuItem value="concise">Concise</MenuItem>
-
                       <MenuItem value="detailed">Detailed</MenuItem>
-
                       <MenuItem value="grammar">Grammar Correction</MenuItem>
                     </TextField>
 
                     <Button
                       variant="outlined"
                       color="primary"
+                      size="medium"
                       startIcon={
                         improving ? (
                           <CircularProgress size={17} />
@@ -429,7 +423,9 @@ function TeacherMessages() {
                       disabled={improving || sending || !content.trim()}
                       sx={{
                         whiteSpace: "nowrap",
-                        minHeight: 40,
+                        height: 40,
+                        px: 2.5,
+                        alignSelf: { xs: "stretch", sm: "center" },
                       }}
                     >
                       {improving ? "Improving..." : "Improve with AI"}
@@ -442,9 +438,9 @@ function TeacherMessages() {
               <Box display="flex" justifyContent="flex-end">
                 <Button
                   variant="contained"
-                  size="large"
                   onClick={handlePreview}
                   disabled={improving || sending}
+                  sx={{ height: 40, px: 3 }}
                 >
                   Preview Announcement
                 </Button>
